@@ -6,7 +6,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 
-const connectDB = require('./config/database');
+const { connectDB } = require('./config/database');
 const { initSocket } = require('./config/socket');
 const logger = require('./utils/logger');
 const errorHandler = require('./middleware/errorHandler');
@@ -34,8 +34,12 @@ app.use(helmet({
 }));
 
 // CORS Configuration
+const allowedOrigin = process.env.NODE_ENV === 'production'
+  ? (process.env.CLIENT_URL_PROD || 'https://kslucircle.com')
+  : (process.env.CLIENT_URL || 'http://localhost:5173');
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: allowedOrigin,
   credentials: true
 }));
 
