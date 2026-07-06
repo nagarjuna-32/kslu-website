@@ -1,15 +1,30 @@
-const Bookmark = require('../models/Bookmark');
+const { prisma } = require('../config/database');
 
 // @desc    Get user bookmarks
 // @route   GET /api/bookmarks
 // @access  Protected
 exports.getBookmarks = async (req, res, next) => {
   try {
-    const bookmarks = await Bookmark.find({ user: req.user.id })
-      .populate({
-        path: 'material',
-        populate: { path: 'uploadedBy', select: 'name avatar college reputation' }
-      });
+    const bookmarksData = await prisma.bookmark.findMany({
+      where: { userId: req.user.id },
+      include: {
+        material: {
+          include: {
+            uploadedBy: {
+              select: { id: true, name: true, avatar: true, college: true, reputation: true }
+            }
+          }
+        }
+      }
+    });
+
+    const bookmarks = bookmarksData.map(b => ({
+      ...b,
+      material: b.material ? {
+        ...b.material,
+        tags: b.material.tags ? b.material.tags.split(',') : []
+      } : null
+    }));
       
     res.status(200).json({ 
       success: true, 
@@ -31,14 +46,25 @@ exports.addBookmark = async (req, res, next) => {
       return res.status(400).json({ success: false, error: 'Please provide materialId' });
     }
 
-    let bookmark = await Bookmark.findOne({ user: req.user.id, material: materialId });
-    if (bookmark) {
+    // Check if already bookmarked
+    const existing = await prisma.bookmark.findUnique({
+      where: {
+        userId_materialId: {
+          userId: req.user.id,
+          materialId
+        }
+      }
+    });
+
+    if (existing) {
       return res.status(400).json({ success: false, error: 'Material already bookmarked' });
     }
 
-    bookmark = await Bookmark.create({
-      user: req.user.id,
-      material: materialId
+    const bookmark = await prisma.bookmark.create({
+      data: {
+        userId: req.user.id,
+        materialId
+      }
     });
 
     res.status(201).json({ 
@@ -55,21 +81,29 @@ exports.addBookmark = async (req, res, next) => {
 // @access  Protected
 exports.deleteBookmark = async (req, res, next) => {
   try {
-    // Try to find by bookmark ID, or fallback to matching user and material ID
-    let bookmark = await Bookmark.findById(req.params.id);
-    if (!bookmark) {
-      bookmark = await Bookmark.findOne({ user: req.user.id, material: req.params.id });
-    }
+    const id = req.params.id; // Can be Bookmark ID or Material ID
 
-    if (!bookmark) {
-      return res.status(404).json({ success: false, error: 'Bookmark not found' });
+    try {
+      // Try to delete via compound key (userId + materialId)
+      await prisma.bookmark.delete({
+        where: {
+          userId_materialId: {
+            userId: req.user.id,
+            materialId: id
+          }
+        }
+      });
+    } catch (err) {
+      // Fallback: delete by Bookmark ID
+      const bookmark = await prisma.bookmark.findUnique({ where: { id } });
+      if (!bookmark || bookmark.userId !== req.user.id) {
+        return res.status(404).json({ success: false, error: 'Bookmark not found' });
+      }
+      
+      await prisma.bookmark.delete({
+        where: { id }
+      });
     }
-
-    if (bookmark.user.toString() !== req.user.id) {
-      return res.status(403).json({ success: false, error: 'Not authorized to remove this bookmark' });
-    }
-
-    await Bookmark.findByIdAndDelete(bookmark._id);
 
     res.status(200).json({ 
       success: true, 

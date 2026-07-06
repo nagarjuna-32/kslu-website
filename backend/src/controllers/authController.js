@@ -1,10 +1,25 @@
 const crypto = require('crypto');
-const User = require('../models/User');
-const ActivityLog = require('../models/ActivityLog');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { prisma } = require('../config/database');
 const emailService = require('../services/emailService');
 const logger = require('../utils/logger');
 
-// Generate cookie options
+// Helper to sign JWT
+const getSignedJwtToken = (user) => {
+  return jwt.sign(
+    { id: user.id, role: user.role },
+    process.env.JWT_SECRET || 'kslu_circle_super_secret_key_change_me_in_production',
+    { expiresIn: process.env.JWT_EXPIRE || '7d' }
+  );
+};
+
+// Helper to match passwords
+const matchPassword = async (enteredPassword, hashedPassword) => {
+  return await bcrypt.compare(enteredPassword, hashedPassword);
+};
+
+// Cookie settings helper
 const getCookieOptions = () => {
   const isProd = process.env.NODE_ENV === 'production';
   return {
@@ -17,36 +32,45 @@ const getCookieOptions = () => {
   };
 };
 
-// Send JWT response with cookie
+// Send JWT token in cookie
 const sendTokenResponse = async (user, statusCode, req, res, actionType) => {
-  const token = user.getSignedJwtToken();
+  const token = getSignedJwtToken(user);
   const options = getCookieOptions();
 
-  // Create activity log
+  // Create audit log
   try {
-    await ActivityLog.create({
-      user: user._id,
-      action: actionType,
-      targetId: user._id,
-      targetType: 'user',
-      ip: req.ip,
-      userAgent: req.headers['user-agent']
+    await prisma.activityLog.create({
+      data: {
+        userId: user.id,
+        action: actionType,
+        targetId: user.id,
+        targetType: 'user',
+        ip: req.ip,
+        userAgent: req.headers['user-agent']
+      }
     });
   } catch (err) {
-    logger.error(`Failed to log activity '${actionType}': ${err.message}`);
+    logger.error(`Failed to audit log activity '${actionType}': ${err.message}`);
   }
 
   // Update last active
-  user.lastActive = new Date();
-  await user.save({ validateBeforeSave: false });
+  try {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastActive: new Date() }
+    });
+  } catch (err) {
+    logger.error(`Failed to update lastActive for user ${user.id}: ${err.message}`);
+  }
 
-  // Remove password from response
-  user.password = undefined;
+  // Clean password before sending response
+  const sanitizedUser = { ...user };
+  delete sanitizedUser.password;
 
   res.status(statusCode).cookie('token', token, options).json({
     success: true,
     token,
-    user
+    user: sanitizedUser
   });
 };
 
@@ -57,35 +81,43 @@ exports.register = async (req, res, next) => {
   try {
     const { name, email, password, college, yearOfStudy } = req.body;
 
-    // Check if user already exists
-    let user = await User.findOne({ email });
-    if (user) {
+    const emailLower = email.toLowerCase();
+
+    // Check if email already registered
+    const existingUser = await prisma.user.findUnique({
+      where: { email: emailLower }
+    });
+
+    if (existingUser) {
       return res.status(400).json({ success: false, error: 'Email already registered' });
     }
 
-    // Generate email verification token
-    const verificationToken = crypto.randomBytes(30).toString('hex');
-    const verificationTokenExpire = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+    // Encrypt password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Create user
-    user = await User.create({
-      name,
-      email,
-      password,
-      college,
-      yearOfStudy,
-      verificationToken,
-      verificationTokenExpire
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(30).toString('hex');
+    const verificationTokenExpire = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    // Create user in PostgreSQL
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email: emailLower,
+        password: hashedPassword,
+        college,
+        yearOfStudy: yearOfStudy ? parseInt(yearOfStudy) : null,
+        verificationToken,
+        verificationTokenExpire
+      }
     });
 
-    // Send verification email
+    // Send emails
     const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
     const verifyUrl = `${clientUrl}/verify-email/${verificationToken}`;
     await emailService.sendVerificationEmail(user, verifyUrl);
-
-    // Send welcome email
-    const loginLink = `${clientUrl}/login`;
-    await emailService.sendWelcomeEmail(user, loginLink);
+    await emailService.sendWelcomeEmail(user, `${clientUrl}/login`);
 
     await sendTokenResponse(user, 201, req, res, 'register');
   } catch (error) {
@@ -99,20 +131,23 @@ exports.register = async (req, res, next) => {
 exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+    const emailLower = email.toLowerCase();
 
-    // Check for user
-    const user = await User.findOne({ email }).select('+password');
-    if (!user) {
+    // Fetch user including password
+    const user = await prisma.user.findUnique({
+      where: { email: emailLower }
+    });
+
+    if (!user || !user.password) {
       return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
 
-    // Check if banned
     if (user.isBanned) {
       return res.status(403).json({ success: false, error: 'Your account has been banned' });
     }
 
-    // Check password match
-    const isMatch = await user.matchPassword(password);
+    // Match password
+    const isMatch = await matchPassword(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
@@ -133,32 +168,46 @@ exports.googleLogin = async (req, res, next) => {
       return res.status(400).json({ success: false, error: 'Email and Google ID are required' });
     }
 
-    let user = await User.findOne({ $or: [{ googleId }, { email }] });
+    const emailLower = email.toLowerCase();
+
+    // Check if user exists by googleId or email
+    let user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { googleId },
+          { email: emailLower }
+        ]
+      }
+    });
 
     if (user) {
-      // Connect Google ID if not already connected
-      if (!user.googleId) {
-        user.googleId = googleId;
-      }
-      if (avatar && !user.avatar) {
-        user.avatar = avatar;
+      // Connect Google ID if not connected
+      if (!user.googleId || (avatar && !user.avatar)) {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            googleId: user.googleId || googleId,
+            avatar: user.avatar || avatar
+          }
+        });
       }
       if (user.isBanned) {
         return res.status(403).json({ success: false, error: 'Your account has been banned' });
       }
-      await user.save();
     } else {
       // Create user
-      user = await User.create({
-        name,
-        email,
-        googleId,
-        avatar,
-        college,
-        yearOfStudy,
-        isVerified: true // Google accounts are pre-verified
+      user = await prisma.user.create({
+        data: {
+          name,
+          email: emailLower,
+          googleId,
+          avatar: avatar || '',
+          college,
+          yearOfStudy: yearOfStudy ? parseInt(yearOfStudy) : null,
+          isVerified: true // Google accounts are pre-verified
+        }
       });
-      // Send welcome email
+      
       const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
       await emailService.sendWelcomeEmail(user, `${clientUrl}/login`);
     }
@@ -175,13 +224,15 @@ exports.googleLogin = async (req, res, next) => {
 exports.logout = async (req, res, next) => {
   try {
     if (req.user) {
-      await ActivityLog.create({
-        user: req.user._id,
-        action: 'logout',
-        targetId: req.user._id,
-        targetType: 'user',
-        ip: req.ip,
-        userAgent: req.headers['user-agent']
+      await prisma.activityLog.create({
+        data: {
+          userId: req.user.id,
+          action: 'logout',
+          targetId: req.user.id,
+          targetType: 'user',
+          ip: req.ip,
+          userAgent: req.headers['user-agent']
+        }
       });
     }
 
@@ -204,19 +255,25 @@ exports.logout = async (req, res, next) => {
 // @access  Public
 exports.verifyEmail = async (req, res, next) => {
   try {
-    const user = await User.findOne({
-      verificationToken: req.params.token,
-      verificationTokenExpire: { $gt: Date.now() }
+    const user = await prisma.user.findFirst({
+      where: {
+        verificationToken: req.params.token,
+        verificationTokenExpire: { gt: new Date() }
+      }
     });
 
     if (!user) {
       return res.status(400).json({ success: false, error: 'Invalid or expired verification token' });
     }
 
-    user.isVerified = true;
-    user.verificationToken = undefined;
-    user.verificationTokenExpire = undefined;
-    await user.save({ validateBeforeSave: false });
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        isVerified: true,
+        verificationToken: null,
+        verificationTokenExpire: null
+      }
+    });
 
     res.status(200).json({
       success: true,
@@ -233,7 +290,9 @@ exports.verifyEmail = async (req, res, next) => {
 exports.forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
-    const user = await User.findOne({ email });
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() }
+    });
 
     if (!user) {
       return res.status(404).json({ success: false, error: 'No user registered with that email' });
@@ -241,11 +300,15 @@ exports.forgotPassword = async (req, res, next) => {
 
     // Generate reset token
     const resetToken = crypto.randomBytes(30).toString('hex');
-    const resetTokenExpire = Date.now() + 1 * 60 * 60 * 1000; // 1 hour
+    const resetTokenExpire = new Date(Date.now() + 1 * 60 * 60 * 1000); // 1 hour
 
-    user.resetPasswordToken = resetToken;
-    user.resetPasswordExpire = resetTokenExpire;
-    await user.save({ validateBeforeSave: false });
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetPasswordToken: resetToken,
+        resetPasswordExpire: resetTokenExpire
+      }
+    });
 
     // Send reset email
     const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
@@ -266,20 +329,29 @@ exports.forgotPassword = async (req, res, next) => {
 // @access  Public
 exports.resetPassword = async (req, res, next) => {
   try {
-    const user = await User.findOne({
-      resetPasswordToken: req.params.token,
-      resetPasswordExpire: { $gt: Date.now() }
+    const user = await prisma.user.findFirst({
+      where: {
+        resetPasswordToken: req.params.token,
+        resetPasswordExpire: { gt: new Date() }
+      }
     });
 
     if (!user) {
       return res.status(400).json({ success: false, error: 'Invalid or expired reset token' });
     }
 
-    // Set new password
-    user.password = req.body.password;
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpire = undefined;
-    await user.save();
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(req.body.password, salt);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        resetPasswordToken: null,
+        resetPasswordExpire: null
+      }
+    });
 
     res.status(200).json({
       success: true,
@@ -295,7 +367,14 @@ exports.resetPassword = async (req, res, next) => {
 // @access  Protected
 exports.getMe = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id }
+    });
+    
+    if (user) {
+      delete user.password;
+    }
+
     res.status(200).json({
       success: true,
       user
@@ -310,36 +389,41 @@ exports.getMe = async (req, res, next) => {
 // @access  Protected
 exports.updateProfile = async (req, res, next) => {
   try {
-    const fieldsToUpdate = {
-      name: req.body.name,
-      college: req.body.college,
-      yearOfStudy: req.body.yearOfStudy,
-      avatar: req.body.avatar,
-      notificationPreferences: req.body.notificationPreferences
-    };
+    const { name, college, yearOfStudy, avatar, notificationPreferences } = req.body;
 
-    // Filter out undefined values
-    Object.keys(fieldsToUpdate).forEach(
-      key => fieldsToUpdate[key] === undefined && delete fieldsToUpdate[key]
-    );
+    const dataToUpdate = {};
+    if (name !== undefined) dataToUpdate.name = name;
+    if (college !== undefined) dataToUpdate.college = college;
+    if (yearOfStudy !== undefined) dataToUpdate.yearOfStudy = parseInt(yearOfStudy);
+    if (avatar !== undefined) dataToUpdate.avatar = avatar;
+    
+    if (notificationPreferences) {
+      if (notificationPreferences.email !== undefined) dataToUpdate.emailPref = !!notificationPreferences.email;
+      if (notificationPreferences.inApp !== undefined) dataToUpdate.inAppPref = !!notificationPreferences.inApp;
+      if (notificationPreferences.digest !== undefined) dataToUpdate.digestPref = !!notificationPreferences.digest;
+    }
 
-    const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
-      new: true,
-      runValidators: true
+    const updatedUser = await prisma.user.update({
+      where: { id: req.user.id },
+      data: dataToUpdate
     });
 
-    await ActivityLog.create({
-      user: req.user._id,
-      action: 'edit',
-      targetId: user._id,
-      targetType: 'user',
-      ip: req.ip,
-      userAgent: req.headers['user-agent']
+    await prisma.activityLog.create({
+      data: {
+        userId: req.user.id,
+        action: 'edit',
+        targetId: updatedUser.id,
+        targetType: 'user',
+        ip: req.ip,
+        userAgent: req.headers['user-agent']
+      }
     });
+
+    delete updatedUser.password;
 
     res.status(200).json({
       success: true,
-      user
+      user: updatedUser
     });
   } catch (error) {
     next(error);
@@ -357,15 +441,27 @@ exports.changePassword = async (req, res, next) => {
       return res.status(400).json({ success: false, error: 'Provide current and new password' });
     }
 
-    const user = await User.findById(req.user.id).select('+password');
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id }
+    });
 
-    const isMatch = await user.matchPassword(currentPassword);
+    if (!user || !user.password) {
+      return res.status(401).json({ success: false, error: 'User password not set' });
+    }
+
+    const isMatch = await matchPassword(currentPassword, user.password);
     if (!isMatch) {
       return res.status(401).json({ success: false, error: 'Incorrect current password' });
     }
 
-    user.password = newPassword;
-    await user.save();
+    // Encrypt password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { password: hashedPassword }
+    });
 
     res.status(200).json({
       success: true,

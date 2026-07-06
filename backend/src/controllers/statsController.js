@@ -1,28 +1,41 @@
-const StudyMaterial = require('../models/StudyMaterial');
-const User = require('../models/User');
-const Announcement = require('../models/Announcement');
+const { prisma } = require('../config/database');
 
 // @desc    Get public statistics for home screen
 // @route   GET /api/stats
 // @access  Public
 exports.getPublicStats = async (req, res, next) => {
   try {
-    const totalNotes = await StudyMaterial.countDocuments({ status: 'approved', type: 'note' });
-    const totalPapers = await StudyMaterial.countDocuments({ status: 'approved', type: 'paper' });
-    const totalUsers = await User.countDocuments();
+    const totalNotes = await prisma.studyMaterial.count({
+      where: { status: 'approved', type: 'note' }
+    });
     
-    // Sum downloads across all materials
-    const downloadStats = await StudyMaterial.aggregate([
-      { $match: { status: 'approved' } },
-      { $group: { _id: null, total: { $sum: '$downloads' } } }
-    ]);
-    const totalDownloads = downloadStats.length > 0 ? downloadStats[0].total : 0;
+    const totalPapers = await prisma.studyMaterial.count({
+      where: { status: 'approved', type: 'paper' }
+    });
+    
+    const totalUsers = await prisma.user.count();
+    
+    // Sum downloads using Prisma aggregates
+    const downloadStats = await prisma.studyMaterial.aggregate({
+      where: { status: 'approved' },
+      _sum: { downloads: true }
+    });
+    const totalDownloads = downloadStats._sum.downloads || 0;
 
-    // Fetch top 5 contributors by reputation
-    const topContributors = await User.find({ isBanned: false })
-      .select('name avatar reputation college totalUploads')
-      .sort({ reputation: -1 })
-      .limit(5);
+    // Fetch top 5 contributors
+    const topContributors = await prisma.user.findMany({
+      where: { isBanned: false },
+      select: {
+        id: true,
+        name: true,
+        avatar: true,
+        reputation: true,
+        college: true,
+        totalUploads: true
+      },
+      orderBy: { reputation: 'desc' },
+      take: 5
+    });
 
     res.status(200).json({
       success: true,
@@ -44,25 +57,20 @@ exports.getPublicStats = async (req, res, next) => {
 // @access  Public
 exports.getSubjectCodes = async (req, res, next) => {
   try {
-    const subjects = await StudyMaterial.aggregate([
-      { $match: { status: 'approved' } },
-      { 
-        $group: { 
-          _id: '$subjectCode', 
-          count: { $sum: 1 }, 
-          subjectName: { $first: '$subjectName' } 
-        } 
-      },
-      { 
-        $project: { 
-          _id: 0, 
-          code: '$_id', 
-          count: 1, 
-          name: '$subjectName' 
-        } 
-      },
-      { $sort: { count: -1 } }
-    ]);
+    const groups = await prisma.studyMaterial.groupBy({
+      by: ['subjectCode', 'subjectName'],
+      where: { status: 'approved' },
+      _count: { id: true },
+      orderBy: {
+        _count: { id: 'desc' }
+      }
+    });
+
+    const subjects = groups.map(g => ({
+      code: g.subjectCode,
+      name: g.subjectName,
+      count: g._count.id
+    }));
     
     res.status(200).json({ 
       success: true, 
@@ -92,16 +100,16 @@ exports.getUniversities = async (req, res, next) => {
 // @access  Public
 exports.getActiveAnnouncements = async (req, res, next) => {
   try {
-    const query = {
-      isActive: true,
-      $or: [
-        { expiresAt: { $exists: false } },
-        { expiresAt: null },
-        { expiresAt: { $gt: new Date() } }
-      ]
-    };
-    
-    const announcements = await Announcement.find(query).sort({ createdAt: -1 });
+    const announcements = await prisma.announcement.findMany({
+      where: {
+        isActive: true,
+        OR: [
+          { expiresAt: null },
+          { expiresAt: { gt: new Date() } }
+        ]
+      },
+      orderBy: { createdAt: 'desc' }
+    });
     
     res.status(200).json({ 
       success: true, 

@@ -1,11 +1,21 @@
-const Notification = require('../models/Notification');
+const { prisma } = require('../config/database');
 
 // @desc    Get user notifications
 // @route   GET /api/notifications
 // @access  Protected
 exports.getNotifications = async (req, res, next) => {
   try {
-    const notifications = await Notification.find({ user: req.user.id }).sort({ createdAt: -1 });
+    const rawNotifications = await prisma.notification.findMany({
+      where: { userId: req.user.id },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // Parse metadata JSON strings if present
+    const notifications = rawNotifications.map(n => ({
+      ...n,
+      metadata: n.metadata ? JSON.parse(n.metadata) : null
+    }));
+
     res.status(200).json({ 
       success: true, 
       count: notifications.length, 
@@ -16,41 +26,27 @@ exports.getNotifications = async (req, res, next) => {
   }
 };
 
-// @desc    Get count of unread notifications
-// @route   GET /api/notifications/unread
-// @access  Protected
-exports.getUnreadCount = async (req, res, next) => {
-  try {
-    const count = await Notification.countDocuments({ user: req.user.id, isRead: false });
-    res.status(200).json({ 
-      success: true, 
-      count 
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// @desc    Mark a notification as read
+// @desc    Mark notification as read
 // @route   PUT /api/notifications/:id/read
 // @access  Protected
-exports.markAsRead = async (req, res, next) => {
+exports.markRead = async (req, res, next) => {
   try {
-    const notif = await Notification.findById(req.params.id);
-    if (!notif) {
+    const notification = await prisma.notification.findUnique({
+      where: { id: req.params.id }
+    });
+
+    if (!notification || notification.userId !== req.user.id) {
       return res.status(404).json({ success: false, error: 'Notification not found' });
     }
 
-    if (notif.user.toString() !== req.user.id) {
-      return res.status(403).json({ success: false, error: 'Not authorized' });
-    }
-
-    notif.isRead = true;
-    await notif.save();
+    const updated = await prisma.notification.update({
+      where: { id: notification.id },
+      data: { isRead: true }
+    });
 
     res.status(200).json({ 
       success: true, 
-      notification: notif 
+      notification: updated 
     });
   } catch (error) {
     next(error);
@@ -60,9 +56,16 @@ exports.markAsRead = async (req, res, next) => {
 // @desc    Mark all notifications as read
 // @route   PUT /api/notifications/read-all
 // @access  Protected
-exports.markAllAsRead = async (req, res, next) => {
+exports.markAllRead = async (req, res, next) => {
   try {
-    await Notification.updateMany({ user: req.user.id, isRead: false }, { isRead: true });
+    await prisma.notification.updateMany({
+      where: { 
+        userId: req.user.id,
+        isRead: false
+      },
+      data: { isRead: true }
+    });
+
     res.status(200).json({ 
       success: true, 
       message: 'All notifications marked as read' 
@@ -72,25 +75,26 @@ exports.markAllAsRead = async (req, res, next) => {
   }
 };
 
-// @desc    Delete a notification
+// @desc    Delete notification
 // @route   DELETE /api/notifications/:id
 // @access  Protected
 exports.deleteNotification = async (req, res, next) => {
   try {
-    const notif = await Notification.findById(req.params.id);
-    if (!notif) {
+    const notification = await prisma.notification.findUnique({
+      where: { id: req.params.id }
+    });
+
+    if (!notification || notification.userId !== req.user.id) {
       return res.status(404).json({ success: false, error: 'Notification not found' });
     }
 
-    if (notif.user.toString() !== req.user.id) {
-      return res.status(403).json({ success: false, error: 'Not authorized' });
-    }
-
-    await Notification.findByIdAndDelete(req.params.id);
+    await prisma.notification.delete({
+      where: { id: notification.id }
+    });
 
     res.status(200).json({ 
       success: true, 
-      message: 'Notification deleted successfully' 
+      message: 'Notification deleted' 
     });
   } catch (error) {
     next(error);

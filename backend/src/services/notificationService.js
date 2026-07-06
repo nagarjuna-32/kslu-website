@@ -1,12 +1,13 @@
-const Notification = require('../models/Notification');
-const User = require('../models/User');
+const { prisma } = require('../config/database');
 const { sendRealtimeNotification } = require('../config/socket');
 const emailService = require('./emailService');
 const logger = require('../utils/logger');
 
 const createNotification = async ({ user, type, title, message, link, metadata }) => {
   try {
-    const userDoc = await User.findById(user);
+    const userDoc = await prisma.user.findUnique({
+      where: { id: user }
+    });
     if (!userDoc) {
       throw new Error(`User not found: ${user}`);
     }
@@ -14,14 +15,16 @@ const createNotification = async ({ user, type, title, message, link, metadata }
     let notif = null;
 
     // 1. Create In-App Notification (database + socket)
-    if (userDoc.notificationPreferences.inApp) {
-      notif = await Notification.create({
-        user,
-        type,
-        title,
-        message,
-        link,
-        metadata
+    if (userDoc.inAppPref) {
+      notif = await prisma.notification.create({
+        data: {
+          userId: user,
+          type,
+          title,
+          message,
+          link,
+          metadata: metadata ? JSON.stringify(metadata) : null
+        }
       });
       
       // Emit to active socket client
@@ -29,7 +32,7 @@ const createNotification = async ({ user, type, title, message, link, metadata }
     }
 
     // 2. Send Email Notification
-    if (userDoc.notificationPreferences.email) {
+    if (userDoc.emailPref) {
       let isEmailSent = false;
       const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
 
@@ -37,10 +40,11 @@ const createNotification = async ({ user, type, title, message, link, metadata }
         switch (type) {
           case 'approval':
             if (metadata && metadata.material) {
+              const mId = metadata.material.id || metadata.material._id;
               isEmailSent = await emailService.sendUploadApprovedEmail(
                 userDoc,
                 metadata.material,
-                `${clientUrl}/materials/${metadata.material._id}`
+                `${clientUrl}/materials/${mId}`
               );
             }
             break;
@@ -56,11 +60,12 @@ const createNotification = async ({ user, type, title, message, link, metadata }
             break;
           case 'milestone':
             if (metadata && metadata.material) {
+              const mId = metadata.material.id || metadata.material._id;
               isEmailSent = await emailService.sendDownloadMilestoneEmail(
                 userDoc,
                 metadata.material,
                 metadata.downloads || 0,
-                `${clientUrl}/materials/${metadata.material._id}`
+                `${clientUrl}/materials/${mId}`
               );
             }
             break;
@@ -80,8 +85,11 @@ const createNotification = async ({ user, type, title, message, link, metadata }
       }
 
       if (notif && isEmailSent) {
+        await prisma.notification.update({
+          where: { id: notif.id },
+          data: { isEmailSent: true }
+        });
         notif.isEmailSent = true;
-        await notif.save();
       }
     }
 
