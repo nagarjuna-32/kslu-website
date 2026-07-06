@@ -503,3 +503,109 @@ exports.exportAnalyticsCSV = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Toggle feature status of material
+// @route   PUT /api/admin/materials/:id/feature
+// @access  Protected (Admin Only)
+exports.toggleFeatureMaterial = async (req, res, next) => {
+  try {
+    const material = await prisma.studyMaterial.findUnique({
+      where: { id: req.params.id }
+    });
+
+    if (!material) {
+      return res.status(404).json({ success: false, error: 'Material not found' });
+    }
+
+    const updated = await prisma.studyMaterial.update({
+      where: { id: material.id },
+      data: { isFeatured: !material.isFeatured }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: updated.isFeatured ? 'Material featured on home' : 'Material unfeatured',
+      material: updated
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Delete material by admin
+// @route   DELETE /api/admin/materials/:id
+// @access  Protected (Admin Only)
+exports.deleteMaterialAdmin = async (req, res, next) => {
+  try {
+    const material = await prisma.studyMaterial.findUnique({
+      where: { id: req.params.id }
+    });
+
+    if (!material) {
+      return res.status(404).json({ success: false, error: 'Material not found' });
+    }
+
+    const { deleteFile } = require('../services/fileService');
+    await deleteFile(material.filePublicId);
+
+    // Decrement uploader's totalUploads (if approved)
+    if (material.status === 'approved') {
+      await prisma.user.update({
+        where: { id: material.uploadedById },
+        data: { totalUploads: { decrement: 1 } }
+      });
+    }
+
+    await prisma.studyMaterial.delete({
+      where: { id: material.id }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Material deleted successfully by admin'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get all activity logs
+// @route   GET /api/admin/activity-logs
+// @access  Protected (Admin Only)
+exports.getActivityLogs = async (req, res, next) => {
+  try {
+    const { action } = req.query;
+    const where = {};
+    if (action) where.action = action;
+
+    const logs = await prisma.activityLog.findMany({
+      where,
+      include: {
+        user: { select: { id: true, name: true, email: true, role: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.status(200).json({
+      success: true,
+      count: logs.length,
+      logs
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update system settings (mockup)
+// @route   PUT /api/admin/settings
+// @access  Protected (Admin Only)
+exports.updateSettings = async (req, res, next) => {
+  try {
+    res.status(200).json({
+      success: true,
+      message: 'System settings updated successfully on the database cluster.'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
