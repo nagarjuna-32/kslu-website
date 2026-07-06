@@ -1,0 +1,140 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                      String          @id @default(uuid())
+  name                    String
+  email                   String          @unique
+  password                String?
+  googleId                String?         @unique
+  avatar                  String          @default("")
+  college                 String?
+  yearOfStudy             Int?
+  role                    String          @default("user")
+  isVerified              Boolean         @default(false)
+  isBanned                Boolean         @default(false)
+  totalDownloads          Int             @default(0)
+  totalUploads            Int             @default(0)
+  reputation              Int             @default(0)
+  emailPref               Boolean         @default(true)
+  inAppPref               Boolean         @default(true)
+  digestPref              Boolean         @default(false)
+  verificationToken       String?
+  verificationTokenExpire DateTime?
+  resetPasswordToken      String?
+  resetPasswordExpire     DateTime?
+  lastActive              DateTime        @default(now())
+  createdAt               DateTime        @default(now())
+
+  // Relations
+  materialsUploaded       StudyMaterial[] @relation("UploadedBy")
+  materialsApproved       StudyMaterial[] @relation("ApprovedBy")
+  notifications           Notification[]
+  announcements           Announcement[]
+  activityLogs            ActivityLog[]
+  bookmarks               Bookmark[]
+  upvotedMaterials        StudyMaterial[] @relation("UpvotesRelation")
+  downvotedMaterials      StudyMaterial[] @relation("DownvotesRelation")
+}
+
+model StudyMaterial {
+  id              String       @id @default(uuid())
+  title           String
+  type            String       // "note" or "paper"
+  subjectCode     String
+  subjectName     String?
+  semester        Int
+  university      String       // "KSLU", "NLSIU", "Christ", "Other"
+  year            Int?
+  description     String?
+  tags            String?      // Store comma-separated tags
+  fileUrl         String
+  filePublicId    String
+  fileSize        Int?
+  fileType        String       @default("application/pdf")
+  status          String       @default("pending") // "pending", "approved", "rejected"
+  rejectionReason String?
+  downloads       Int          @default(0)
+  views           Int          @default(0)
+  upvotes         Int          @default(0)
+  downvotes       Int          @default(0)
+  isFeatured      Boolean      @default(false)
+  isPopular       Boolean      @default(false)
+  approvedAt      DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  // Relations
+  uploadedById    String
+  uploadedBy      User         @relation("UploadedBy", fields: [uploadedById], references: [id], onDelete: Cascade)
+  approvedById    String?
+  approvedBy      User?        @relation("ApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  upvotedBy       User[]       @relation("UpvotesRelation")
+  downvotedBy     User[]       @relation("DownvotesRelation")
+  bookmarks       Bookmark[]
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  type        String   // "approval", "rejection", "download", "announcement", etc.
+  title       String
+  message     String
+  link        String?
+  metadata    String?  // JSON string
+  isRead      Boolean  @default(false)
+  isEmailSent Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Announcement {
+  id          String    @id @default(uuid())
+  title       String
+  content     String
+  type        String    @default("info") // "info", "warning", "success", "urgent"
+  isActive    Boolean   @default(true)
+  isGlobal    Boolean   @default(true)
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  createdById String
+  createdBy   User      @relation(fields: [createdById], references: [id], onDelete: Cascade)
+}
+
+model ActivityLog {
+  id         String   @id @default(uuid())
+  action     String   // "upload", "download", etc.
+  targetId   String?
+  targetType String?
+  details    String?  // JSON string
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  // Relations
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model Bookmark {
+  id         String        @id @default(uuid())
+  createdAt  DateTime      @default(now())
+
+  // Relations
+  userId     String
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  materialId String
+  material   StudyMaterial @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, materialId])
+}
