@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const { prisma } = require('../config/database');
 
 const protect = async (req, res, next) => {
   let token;
@@ -32,7 +32,9 @@ const protect = async (req, res, next) => {
       process.env.JWT_SECRET || 'kslu_circle_super_secret_key_change_me_in_production'
     );
     
-    req.user = await User.findById(decoded.id);
+    req.user = await prisma.user.findUnique({
+      where: { id: decoded.id }
+    });
     
     if (!req.user) {
       return res.status(401).json({ success: false, error: 'User no longer exists' });
