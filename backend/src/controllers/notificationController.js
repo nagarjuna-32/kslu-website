@@ -26,6 +26,27 @@ exports.getNotifications = async (req, res, next) => {
   }
 };
 
+// @desc    Get unread notifications count
+// @route   GET /api/notifications/unread
+// @access  Protected
+exports.getUnreadCount = async (req, res, next) => {
+  try {
+    const count = await prisma.notification.count({
+      where: {
+        userId: req.user.id,
+        isRead: false
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      count
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Mark notification as read
 // @route   PUT /api/notifications/:id/read
 // @access  Protected
