@@ -1,6 +1,4 @@
-const StudyMaterial = require('../models/StudyMaterial');
-const User = require('../models/User');
-const ActivityLog = require('../models/ActivityLog');
+const { prisma } = require('../config/database');
 const { uploadFile, deleteFile } = require('../services/fileService');
 const { createNotification } = require('../services/notificationService');
 const logger = require('../utils/logger');
@@ -8,7 +6,10 @@ const logger = require('../utils/logger');
 // Helper to update user reputation
 const updateUserReputation = async (userId, points) => {
   try {
-    await User.findByIdAndUpdate(userId, { $inc: { reputation: points } });
+    await prisma.user.update({
+      where: { id: userId },
+      data: { reputation: { increment: points } }
+    });
   } catch (err) {
     logger.error(`Failed to update reputation for user ${userId}: ${err.message}`);
   }
@@ -30,39 +31,52 @@ exports.getMaterials = async (req, res, next) => {
       limit = 10 
     } = req.query;
 
-    const query = { status: 'approved' };
+    const where = { status: 'approved' };
 
     // Apply filters
-    if (type) query.type = type;
-    if (semester) query.semester = parseInt(semester);
-    if (university) query.university = university;
-    if (subjectCode) query.subjectCode = subjectCode.toUpperCase();
+    if (type) where.type = type;
+    if (semester) where.semester = parseInt(semester);
+    if (university) where.university = university;
+    if (subjectCode) where.subjectCode = subjectCode.toUpperCase();
 
     // Text search (search in title, subjectName, subjectCode, tags)
     if (search) {
-      query.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { subjectName: { $regex: search, $options: 'i' } },
-        { subjectCode: { $regex: search, $options: 'i' } },
-        { tags: { $regex: search, $options: 'i' } }
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { subjectName: { contains: search, mode: 'insensitive' } },
+        { subjectCode: { contains: search, mode: 'insensitive' } },
+        { tags: { contains: search, mode: 'insensitive' } }
       ];
     }
 
-    // Determine sort
-    let sortField = { createdAt: -1 }; // default newest
-    if (sortBy === 'downloads') sortField = { downloads: -1 };
-    else if (sortBy === 'views') sortField = { views: -1 };
-    else if (sortBy === 'upvotes') sortField = { upvotes: -1 };
+    // Determine sort order
+    let orderBy = { createdAt: 'desc' };
+    if (sortBy === 'downloads') orderBy = { downloads: 'desc' };
+    else if (sortBy === 'views') orderBy = { views: 'desc' };
+    else if (sortBy === 'upvotes') orderBy = { upvotes: 'desc' };
 
-    // Execute query with pagination
+    // Pagination bounds
     const skip = (parseInt(page) - 1) * parseInt(limit);
-    
-    const total = await StudyMaterial.countDocuments(query);
-    const materials = await StudyMaterial.find(query)
-      .populate('uploadedBy', 'name avatar college reputation')
-      .sort(sortField)
-      .skip(skip)
-      .limit(parseInt(limit));
+    const take = parseInt(limit);
+
+    const total = await prisma.studyMaterial.count({ where });
+    const rawMaterials = await prisma.studyMaterial.findMany({
+      where,
+      include: {
+        uploadedBy: {
+          select: { id: true, name: true, avatar: true, college: true, reputation: true }
+        }
+      },
+      orderBy,
+      skip,
+      take
+    });
+
+    // Format tags back into arrays
+    const materials = rawMaterials.map(m => ({
+      ...m,
+      tags: m.tags ? m.tags.split(',') : []
+    }));
 
     res.status(200).json({
       success: true,
@@ -70,7 +84,7 @@ exports.getMaterials = async (req, res, next) => {
       pagination: {
         total,
         page: parseInt(page),
-        pages: Math.ceil(total / parseInt(limit))
+        pages: Math.ceil(total / take)
       },
       materials
     });
@@ -84,29 +98,48 @@ exports.getMaterials = async (req, res, next) => {
 // @access  Public
 exports.getMaterial = async (req, res, next) => {
   try {
-    const material = await StudyMaterial.findById(req.params.id)
-      .populate('uploadedBy', 'name avatar college reputation totalUploads createdAt')
-      .populate('approvedBy', 'name');
+    const rawMaterial = await prisma.studyMaterial.findUnique({
+      where: { id: req.params.id },
+      include: {
+        uploadedBy: {
+          select: { id: true, name: true, avatar: true, college: true, reputation: true, totalUploads: true, createdAt: true }
+        },
+        approvedBy: {
+          select: { name: true }
+        },
+        upvotedBy: { select: { id: true } },
+        downvotedBy: { select: { id: true } }
+      }
+    });
 
-    if (!material) {
+    if (!rawMaterial) {
       return res.status(404).json({ success: false, error: 'Material not found' });
     }
 
-    // Increment views (don't block response)
-    material.views += 1;
-    await material.save({ validateBeforeSave: false });
+    // Increment views (non-blocking)
+    await prisma.studyMaterial.update({
+      where: { id: rawMaterial.id },
+      data: { views: { increment: 1 } }
+    });
 
-    // Try logging view
     try {
-      await ActivityLog.create({
-        action: 'view',
-        targetId: material._id,
-        targetType: material.type,
-        details: { title: material.title }
+      await prisma.activityLog.create({
+        data: {
+          action: 'view',
+          targetId: rawMaterial.id,
+          targetType: rawMaterial.type,
+          details: JSON.stringify({ title: rawMaterial.title })
+        }
       });
-    } catch (err) {
-      // ignore log failure
-    }
+    } catch (err) {}
+
+    // Format tags
+    const material = {
+      ...rawMaterial,
+      tags: rawMaterial.tags ? rawMaterial.tags.split(',') : [],
+      upvotedBy: rawMaterial.upvotedBy.map(u => u.id),
+      downvotedBy: rawMaterial.downvotedBy.map(u => u.id)
+    };
 
     res.status(200).json({
       success: true,
@@ -128,42 +161,44 @@ exports.uploadMaterial = async (req, res, next) => {
 
     const { title, type, subjectCode, subjectName, semester, university, year, description, tags } = req.body;
 
-    // Process file upload via File Service
     const uploadResult = await uploadFile(req.file);
 
-    // Parse tags (comma separated)
-    let tagList = [];
+    // Save comma-separated tags
+    let tagString = '';
     if (tags) {
-      tagList = tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+      tagString = tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0).join(',');
     }
 
-    const material = await StudyMaterial.create({
-      title,
-      type,
-      subjectCode: subjectCode.toUpperCase(),
-      subjectName,
-      semester: parseInt(semester),
-      university,
-      year: year ? parseInt(year) : undefined,
-      description,
-      tags: tagList,
-      fileUrl: uploadResult.fileUrl,
-      filePublicId: uploadResult.filePublicId,
-      fileSize: uploadResult.fileSize,
-      uploadedBy: req.user._id
+    const material = await prisma.studyMaterial.create({
+      data: {
+        title,
+        type,
+        subjectCode: subjectCode.toUpperCase(),
+        subjectName,
+        semester: parseInt(semester),
+        university,
+        year: year ? parseInt(year) : null,
+        description,
+        tags: tagString,
+        fileUrl: uploadResult.fileUrl,
+        filePublicId: uploadResult.filePublicId,
+        fileSize: uploadResult.fileSize,
+        uploadedById: req.user.id
+      }
     });
 
     // Log Activity
-    await ActivityLog.create({
-      user: req.user._id,
-      action: 'upload',
-      targetId: material._id,
-      targetType: type,
-      ip: req.ip,
-      userAgent: req.headers['user-agent']
+    await prisma.activityLog.create({
+      data: {
+        userId: req.user.id,
+        action: 'upload',
+        targetId: material.id,
+        targetType: type,
+        ip: req.ip,
+        userAgent: req.headers['user-agent']
+      }
     });
 
-    // We do not award reputation points yet. Reputation points are awarded upon Admin Approval.
     res.status(201).json({
       success: true,
       message: 'Material uploaded successfully and is currently under review.',
@@ -179,52 +214,59 @@ exports.uploadMaterial = async (req, res, next) => {
 // @access  Protected (Owner/Admin)
 exports.updateMaterial = async (req, res, next) => {
   try {
-    let material = await StudyMaterial.findById(req.params.id);
+    const material = await prisma.studyMaterial.findUnique({
+      where: { id: req.params.id }
+    });
 
     if (!material) {
       return res.status(404).json({ success: false, error: 'Material not found' });
     }
 
     // Check ownership or admin status
-    if (material.uploadedBy.toString() !== req.user.id && req.user.role !== 'admin' && req.user.role !== 'superadmin') {
+    if (material.uploadedById !== req.user.id && req.user.role !== 'admin' && req.user.role !== 'superadmin') {
       return res.status(403).json({ success: false, error: 'Not authorized to update this material' });
     }
 
     const { title, subjectCode, subjectName, semester, university, year, description, tags } = req.body;
 
-    if (title) material.title = title;
-    if (subjectCode) material.subjectCode = subjectCode.toUpperCase();
-    if (subjectName) material.subjectName = subjectName;
-    if (semester) material.semester = parseInt(semester);
-    if (university) material.university = university;
-    if (year) material.year = parseInt(year);
-    if (description !== undefined) material.description = description;
+    const dataToUpdate = {};
+    if (title !== undefined) dataToUpdate.title = title;
+    if (subjectCode !== undefined) dataToUpdate.subjectCode = subjectCode.toUpperCase();
+    if (subjectName !== undefined) dataToUpdate.subjectName = subjectName;
+    if (semester !== undefined) dataToUpdate.semester = parseInt(semester);
+    if (university !== undefined) dataToUpdate.university = university;
+    if (year !== undefined) dataToUpdate.year = year ? parseInt(year) : null;
+    if (description !== undefined) dataToUpdate.description = description;
     
-    if (tags) {
-      material.tags = tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+    if (tags !== undefined) {
+      dataToUpdate.tags = tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0).join(',');
     }
 
-    // If edited, reset status to pending for moderation
+    // If edited by a user, reset status to pending for moderation
     if (req.user.role === 'user') {
-      material.status = 'pending';
+      dataToUpdate.status = 'pending';
     }
 
-    material.updatedAt = Date.now();
-    await material.save();
+    const updated = await prisma.studyMaterial.update({
+      where: { id: material.id },
+      data: dataToUpdate
+    });
 
-    await ActivityLog.create({
-      user: req.user._id,
-      action: 'edit',
-      targetId: material._id,
-      targetType: material.type,
-      ip: req.ip,
-      userAgent: req.headers['user-agent']
+    await prisma.activityLog.create({
+      data: {
+        userId: req.user.id,
+        action: 'edit',
+        targetId: material.id,
+        targetType: material.type,
+        ip: req.ip,
+        userAgent: req.headers['user-agent']
+      }
     });
 
     res.status(200).json({
       success: true,
       message: 'Material updated successfully.',
-      material
+      material: updated
     });
   } catch (error) {
     next(error);
@@ -236,33 +278,41 @@ exports.updateMaterial = async (req, res, next) => {
 // @access  Protected (Owner/Admin)
 exports.deleteMaterial = async (req, res, next) => {
   try {
-    const material = await StudyMaterial.findById(req.params.id);
+    const material = await prisma.studyMaterial.findUnique({
+      where: { id: req.params.id }
+    });
 
     if (!material) {
       return res.status(404).json({ success: false, error: 'Material not found' });
     }
 
-    // Check ownership or admin
-    if (material.uploadedBy.toString() !== req.user.id && req.user.role !== 'admin' && req.user.role !== 'superadmin') {
+    if (material.uploadedById !== req.user.id && req.user.role !== 'admin' && req.user.role !== 'superadmin') {
       return res.status(403).json({ success: false, error: 'Not authorized to delete this material' });
     }
 
-    // Delete file using file service
     await deleteFile(material.filePublicId);
 
-    // Remove from uploads counts
-    await User.findByIdAndUpdate(material.uploadedBy, { $inc: { totalUploads: -1 } });
+    // Decrement uploader's totalUploads (if approved)
+    if (material.status === 'approved') {
+      await prisma.user.update({
+        where: { id: material.uploadedById },
+        data: { totalUploads: { decrement: 1 } }
+      });
+    }
 
-    // Delete from DB
-    await StudyMaterial.findByIdAndDelete(req.params.id);
+    await prisma.studyMaterial.delete({
+      where: { id: material.id }
+    });
 
-    await ActivityLog.create({
-      user: req.user._id,
-      action: 'delete',
-      targetId: material._id,
-      targetType: material.type,
-      ip: req.ip,
-      userAgent: req.headers['user-agent']
+    await prisma.activityLog.create({
+      data: {
+        userId: req.user.id,
+        action: 'delete',
+        targetId: material.id,
+        targetType: material.type,
+        ip: req.ip,
+        userAgent: req.headers['user-agent']
+      }
     });
 
     res.status(200).json({
@@ -279,60 +329,68 @@ exports.deleteMaterial = async (req, res, next) => {
 // @access  Protected
 exports.downloadMaterial = async (req, res, next) => {
   try {
-    const material = await StudyMaterial.findById(req.params.id);
+    const material = await prisma.studyMaterial.findUnique({
+      where: { id: req.params.id }
+    });
 
     if (!material) {
       return res.status(404).json({ success: false, error: 'Material not found' });
     }
 
-    // Increment download counter
-    material.downloads += 1;
-    await material.save({ validateBeforeSave: false });
-
-    // Log Activity
-    await ActivityLog.create({
-      user: req.user._id,
-      action: 'download',
-      targetId: material._id,
-      targetType: material.type,
-      ip: req.ip,
-      userAgent: req.headers['user-agent']
+    const updatedMaterial = await prisma.studyMaterial.update({
+      where: { id: material.id },
+      data: { downloads: { increment: 1 } }
     });
 
-    // Update downloader downloads metric
-    await User.findByIdAndUpdate(req.user.id, { $inc: { totalDownloads: 1 } });
+    await prisma.activityLog.create({
+      data: {
+        userId: req.user.id,
+        action: 'download',
+        targetId: material.id,
+        targetType: material.type,
+        ip: req.ip,
+        userAgent: req.headers['user-agent']
+      }
+    });
 
-    // Update uploader reputation & metrics (if uploader is not downloader)
-    if (material.uploadedBy.toString() !== req.user.id) {
-      // Increment uploader's files downloads tally
-      await User.findByIdAndUpdate(material.uploadedBy, { $inc: { reputation: 2 } });
+    // Increment downloads count for current user
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { totalDownloads: { increment: 1 } }
+    });
 
-      // Check for milestones: 10, 50, 100 downloads
+    // Update uploader reputation & metrics
+    if (material.uploadedById !== req.user.id) {
+      await prisma.user.update({
+        where: { id: material.uploadedById },
+        data: { reputation: { increment: 2 } }
+      });
+
+      // Check milestones
       const milestones = [10, 50, 100, 250, 500];
-      if (milestones.includes(material.downloads)) {
+      if (milestones.includes(updatedMaterial.downloads)) {
         await createNotification({
-          user: material.uploadedBy,
+          user: material.uploadedById,
           type: 'milestone',
           title: 'Download Milestone Reached! 🎉',
-          message: `Your material "${material.title}" has been downloaded ${material.downloads} times!`,
-          link: `/materials/${material._id}`,
-          metadata: { material, downloads: material.downloads }
+          message: `Your material "${material.title}" has been downloaded ${updatedMaterial.downloads} times!`,
+          link: `/materials/${material.id}`,
+          metadata: { material: updatedMaterial, downloads: updatedMaterial.downloads }
         });
       } else {
-        // Standard notification for download
         await createNotification({
-          user: material.uploadedBy,
+          user: material.uploadedById,
           type: 'download',
           title: 'Document Downloaded 📥',
           message: `Someone downloaded your file "${material.title}".`,
-          link: `/materials/${material._id}`
+          link: `/materials/${material.id}`
         });
       }
     }
 
     res.status(200).json({
       success: true,
-      downloads: material.downloads
+      downloads: updatedMaterial.downloads
     });
   } catch (error) {
     next(error);
@@ -344,78 +402,118 @@ exports.downloadMaterial = async (req, res, next) => {
 // @access  Protected
 exports.rateMaterial = async (req, res, next) => {
   try {
-    const { direction } = req.body; // 'up' or 'down' or 'none' (to undo rating)
+    const { direction } = req.body; // 'up', 'down', 'none'
     const userId = req.user.id;
 
     if (!['up', 'down', 'none'].includes(direction)) {
       return res.status(400).json({ success: false, error: 'Rating must be up, down, or none' });
     }
 
-    const material = await StudyMaterial.findById(req.params.id);
+    const material = await prisma.studyMaterial.findUnique({
+      where: { id: req.params.id },
+      include: {
+        upvotedBy: { select: { id: true } },
+        downvotedBy: { select: { id: true } }
+      }
+    });
+
     if (!material) {
       return res.status(404).json({ success: false, error: 'Material not found' });
     }
 
-    const upvoteIndex = material.upvotedBy.indexOf(userId);
-    const downvoteIndex = material.downvotedBy.indexOf(userId);
+    const hasUpvoted = material.upvotedBy.some(u => u.id === userId);
+    const hasDownvoted = material.downvotedBy.some(u => u.id === userId);
 
     let reputationDelta = 0;
 
-    // Reset previous vote
-    if (upvoteIndex > -1) {
-      material.upvotedBy.splice(upvoteIndex, 1);
-      reputationDelta -= 5; // revoke previous upvote reputation from uploader
+    // Disconnect old votes
+    const disconnects = {};
+    if (hasUpvoted) {
+      disconnects.upvotedBy = { disconnect: { id: userId } };
+      reputationDelta -= 5;
     }
-    if (downvoteIndex > -1) {
-      material.downvotedBy.splice(downvoteIndex, 1);
-      reputationDelta += 2; // restore previous downvote penalty
+    if (hasDownvoted) {
+      disconnects.downvotedBy = { disconnect: { id: userId } };
+      reputationDelta += 2;
     }
 
-    // Apply new vote
+    // Apply disconnects first
+    if (Object.keys(disconnects).length > 0) {
+      await prisma.studyMaterial.update({
+        where: { id: material.id },
+        data: disconnects
+      });
+    }
+
+    // Connect new vote
+    const connects = {};
     if (direction === 'up') {
-      material.upvotedBy.push(userId);
+      connects.upvotedBy = { connect: { id: userId } };
       reputationDelta += 5;
     } else if (direction === 'down') {
-      material.downvotedBy.push(userId);
+      connects.downvotedBy = { connect: { id: userId } };
       reputationDelta -= 2;
     }
 
-    material.upvotes = material.upvotedBy.length;
-    material.downvotes = material.downvotedBy.length;
+    // Save connects and update totals
+    if (Object.keys(connects).length > 0) {
+      await prisma.studyMaterial.update({
+        where: { id: material.id },
+        data: connects
+      });
+    }
 
-    await material.save({ validateBeforeSave: false });
+    // Fetch new upvotes/downvotes length
+    const finalMaterial = await prisma.studyMaterial.findUnique({
+      where: { id: material.id },
+      include: {
+        _count: {
+          select: { upvotedBy: true, downvotedBy: true }
+        }
+      }
+    });
 
-    // Update uploader reputation (if uploader is not voter)
-    if (material.uploadedBy.toString() !== userId && reputationDelta !== 0) {
-      await updateUserReputation(material.uploadedBy, reputationDelta);
+    // Update numbers
+    const updated = await prisma.studyMaterial.update({
+      where: { id: material.id },
+      data: {
+        upvotes: finalMaterial._count.upvotedBy,
+        downvotes: finalMaterial._count.downvotedBy
+      }
+    });
 
-      // Notify uploader on new upvote
+    // Update uploader reputation
+    if (material.uploadedById !== userId && reputationDelta !== 0) {
+      await updateUserReputation(material.uploadedById, reputationDelta);
+
       if (direction === 'up') {
         await createNotification({
-          user: material.uploadedBy,
+          user: material.uploadedById,
           type: 'comment',
           title: 'New Upvote! 👍',
           message: `${req.user.name} upvoted your material "${material.title}".`,
-          link: `/materials/${material._id}`
+          link: `/materials/${material.id}`
         });
       }
     }
 
-    // Log activity
+    // Log Activity
     try {
-      await ActivityLog.create({
-        user: userId,
-        action: 'upvote',
-        targetId: material._id,
-        targetType: material.type,
-        details: { direction }
+      await prisma.activityLog.create({
+        data: {
+          userId,
+          action: 'upvote',
+          targetId: material.id,
+          targetType: material.type,
+          details: JSON.stringify({ direction })
+        }
       });
     } catch (err) {}
 
     res.status(200).json({
       success: true,
-      upvotes: material.upvotes,
-      downvotes: material.downvotes,
+      upvotes: updated.upvotes,
+      downvotes: updated.downvotes,
       userVote: direction
     });
   } catch (error) {
@@ -428,7 +526,16 @@ exports.rateMaterial = async (req, res, next) => {
 // @access  Protected
 exports.getMyMaterials = async (req, res, next) => {
   try {
-    const materials = await StudyMaterial.find({ uploadedBy: req.user.id }).sort({ createdAt: -1 });
+    const rawMaterials = await prisma.studyMaterial.findMany({
+      where: { uploadedById: req.user.id },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const materials = rawMaterials.map(m => ({
+      ...m,
+      tags: m.tags ? m.tags.split(',') : []
+    }));
+
     res.status(200).json({
       success: true,
       count: materials.length,
@@ -445,7 +552,16 @@ exports.getMyMaterials = async (req, res, next) => {
 exports.getMaterialsBySubject = async (req, res, next) => {
   try {
     const code = req.params.code.toUpperCase();
-    const materials = await StudyMaterial.find({ subjectCode: code, status: 'approved' }).sort({ downloads: -1 });
+    const rawMaterials = await prisma.studyMaterial.findMany({
+      where: { subjectCode: code, status: 'approved' },
+      orderBy: { downloads: 'desc' }
+    });
+
+    const materials = rawMaterials.map(m => ({
+      ...m,
+      tags: m.tags ? m.tags.split(',') : []
+    }));
+
     res.status(200).json({
       success: true,
       count: materials.length,
@@ -461,9 +577,21 @@ exports.getMaterialsBySubject = async (req, res, next) => {
 // @access  Public
 exports.getFeaturedMaterials = async (req, res, next) => {
   try {
-    const materials = await StudyMaterial.find({ status: 'approved', isFeatured: true })
-      .populate('uploadedBy', 'name avatar reputation college')
-      .limit(6);
+    const rawMaterials = await prisma.studyMaterial.findMany({
+      where: { status: 'approved', isFeatured: true },
+      include: {
+        uploadedBy: {
+          select: { id: true, name: true, avatar: true, reputation: true, college: true }
+        }
+      },
+      take: 6
+    });
+
+    const materials = rawMaterials.map(m => ({
+      ...m,
+      tags: m.tags ? m.tags.split(',') : []
+    }));
+
     res.status(200).json({
       success: true,
       materials
@@ -478,10 +606,22 @@ exports.getFeaturedMaterials = async (req, res, next) => {
 // @access  Public
 exports.getPopularMaterials = async (req, res, next) => {
   try {
-    const materials = await StudyMaterial.find({ status: 'approved' })
-      .populate('uploadedBy', 'name avatar reputation college')
-      .sort({ downloads: -1 })
-      .limit(6);
+    const rawMaterials = await prisma.studyMaterial.findMany({
+      where: { status: 'approved' },
+      include: {
+        uploadedBy: {
+          select: { id: true, name: true, avatar: true, reputation: true, college: true }
+        }
+      },
+      orderBy: { downloads: 'desc' },
+      take: 6
+    });
+
+    const materials = rawMaterials.map(m => ({
+      ...m,
+      tags: m.tags ? m.tags.split(',') : []
+    }));
+
     res.status(200).json({
       success: true,
       materials
@@ -496,10 +636,22 @@ exports.getPopularMaterials = async (req, res, next) => {
 // @access  Public
 exports.getRecentMaterials = async (req, res, next) => {
   try {
-    const materials = await StudyMaterial.find({ status: 'approved' })
-      .populate('uploadedBy', 'name avatar reputation college')
-      .sort({ createdAt: -1 })
-      .limit(6);
+    const rawMaterials = await prisma.studyMaterial.findMany({
+      where: { status: 'approved' },
+      include: {
+        uploadedBy: {
+          select: { id: true, name: true, avatar: true, reputation: true, college: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 6
+    });
+
+    const materials = rawMaterials.map(m => ({
+      ...m,
+      tags: m.tags ? m.tags.split(',') : []
+    }));
+
     res.status(200).json({
       success: true,
       materials

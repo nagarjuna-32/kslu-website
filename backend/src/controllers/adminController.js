@@ -1,34 +1,47 @@
-const StudyMaterial = require('../models/StudyMaterial');
-const User = require('../models/User');
-const Announcement = require('../models/Announcement');
-const ActivityLog = require('../models/ActivityLog');
+const { prisma } = require('../config/database');
 const { createNotification } = require('../services/notificationService');
-const { deleteFile } = require('../services/fileService');
 const logger = require('../utils/logger');
 
-// @desc    Get dashboard summary counters
+// @desc    Get stats summary & updates for admin home screen
 // @route   GET /api/admin/dashboard
 // @access  Protected (Admin Only)
 exports.getDashboardStats = async (req, res, next) => {
   try {
-    const totalUsers = await User.countDocuments();
-    const totalUploads = await StudyMaterial.countDocuments();
-    const pendingUploads = await StudyMaterial.countDocuments({ status: 'pending' });
+    const totalUsers = await prisma.user.count();
+    const totalUploads = await prisma.studyMaterial.count({
+      where: { status: 'approved' }
+    });
+    const pendingUploads = await prisma.studyMaterial.count({
+      where: { status: 'pending' }
+    });
 
-    const downloadAggregate = await StudyMaterial.aggregate([
-      { $group: { _id: null, total: { $sum: '$downloads' } } }
-    ]);
-    const totalDownloads = downloadAggregate.length > 0 ? downloadAggregate[0].total : 0;
+    const downloadStats = await prisma.studyMaterial.aggregate({
+      _sum: { downloads: true }
+    });
+    const totalDownloads = downloadStats._sum.downloads || 0;
 
-    const recentPending = await StudyMaterial.find({ status: 'pending' })
-      .populate('uploadedBy', 'name email avatar')
-      .sort({ createdAt: -1 })
-      .limit(5);
+    // Recent pending
+    const rawPending = await prisma.studyMaterial.findMany({
+      where: { status: 'pending' },
+      include: {
+        uploadedBy: { select: { id: true, name: true } }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 5
+    });
+    const recentPending = rawPending.map(p => ({
+      ...p,
+      tags: p.tags ? p.tags.split(',') : []
+    }));
 
-    const recentLogs = await ActivityLog.find()
-      .populate('user', 'name role')
-      .sort({ createdAt: -1 })
-      .limit(5);
+    // Recent activity logs
+    const recentLogs = await prisma.activityLog.findMany({
+      include: {
+        user: { select: { id: true, name: true } }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 5
+    });
 
     res.status(200).json({
       success: true,
@@ -46,13 +59,26 @@ exports.getDashboardStats = async (req, res, next) => {
   }
 };
 
-// @desc    Get pending materials
+// @desc    Get all pending verification study materials
 // @route   GET /api/admin/pending
 // @access  Protected (Admin Only)
 exports.getPendingMaterials = async (req, res, next) => {
   try {
-    const materials = await StudyMaterial.find({ status: 'pending' })
-      .populate('uploadedBy', 'name email avatar college reputation');
+    const rawMaterials = await prisma.studyMaterial.findMany({
+      where: { status: 'pending' },
+      include: {
+        uploadedBy: {
+          select: { id: true, name: true, avatar: true, reputation: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const materials = rawMaterials.map(m => ({
+      ...m,
+      tags: m.tags ? m.tags.split(',') : []
+    }));
+
     res.status(200).json({
       success: true,
       count: materials.length,
@@ -63,53 +89,67 @@ exports.getPendingMaterials = async (req, res, next) => {
   }
 };
 
-// @desc    Approve material
+// @desc    Approve and publish material
 // @route   PUT /api/admin/materials/:id/approve
 // @access  Protected (Admin Only)
 exports.approveMaterial = async (req, res, next) => {
   try {
-    const material = await StudyMaterial.findById(req.params.id);
+    const material = await prisma.studyMaterial.findUnique({
+      where: { id: req.params.id }
+    });
+
     if (!material) {
       return res.status(404).json({ success: false, error: 'Material not found' });
     }
 
     if (material.status === 'approved') {
-      return res.status(400).json({ success: false, error: 'Material already approved' });
+      return res.status(400).json({ success: false, error: 'Material is already approved' });
     }
 
-    material.status = 'approved';
-    material.approvedBy = req.user._id;
-    material.approvedAt = Date.now();
-    await material.save();
-
-    // Award +10 reputation and increment uploads for the user who uploaded
-    await User.findByIdAndUpdate(material.uploadedBy, {
-      $inc: { reputation: 10, totalUploads: 1 }
+    const updated = await prisma.studyMaterial.update({
+      where: { id: material.id },
+      data: {
+        status: 'approved',
+        approvedById: req.user.id,
+        approvedAt: new Date()
+      }
     });
 
-    // Create Notification and trigger email
+    // Award reputation stars & increment totals
+    await prisma.user.update({
+      where: { id: material.uploadedById },
+      data: {
+        reputation: { increment: 10 },
+        totalUploads: { increment: 1 }
+      }
+    });
+
+    // Create Notification
     await createNotification({
-      user: material.uploadedBy,
+      user: material.uploadedById,
       type: 'approval',
-      title: 'Material Approved! ✅',
-      message: `Your file "${material.title}" has been approved and is now live!`,
-      link: `/materials/${material._id}`,
-      metadata: { material }
+      title: 'Upload Approved! 🏆',
+      message: `Your upload "${material.title}" has been verified and published. You gained 10 reputation stars!`,
+      link: `/materials/${material.id}`
     });
 
-    // Log Activity
-    await ActivityLog.create({
-      user: req.user._id,
-      action: 'approve',
-      targetId: material._id,
-      targetType: material.type,
-      details: { title: material.title }
-    });
+    // Audit logs
+    try {
+      await prisma.activityLog.create({
+        data: {
+          userId: req.user.id,
+          action: 'approve',
+          targetId: material.id,
+          targetType: material.type,
+          details: JSON.stringify({ title: material.title })
+        }
+      });
+    } catch (err) {}
 
     res.status(200).json({
       success: true,
-      message: 'Material approved and published',
-      material
+      message: 'Material approved and published successfully',
+      material: updated
     });
   } catch (error) {
     next(error);
@@ -126,90 +166,48 @@ exports.rejectMaterial = async (req, res, next) => {
       return res.status(400).json({ success: false, error: 'Please provide a rejection reason' });
     }
 
-    const material = await StudyMaterial.findById(req.params.id);
+    const material = await prisma.studyMaterial.findUnique({
+      where: { id: req.params.id }
+    });
+
     if (!material) {
       return res.status(404).json({ success: false, error: 'Material not found' });
     }
 
-    material.status = 'rejected';
-    material.rejectionReason = reason;
-    await material.save();
+    const updated = await prisma.studyMaterial.update({
+      where: { id: material.id },
+      data: {
+        status: 'rejected',
+        rejectionReason: reason
+      }
+    });
 
-    // Create notification and trigger email
+    // Create notification
     await createNotification({
-      user: material.uploadedBy,
+      user: material.uploadedById,
       type: 'rejection',
-      title: 'Upload Rejected ❌',
-      message: `Your upload "${material.title}" was not approved. Reason: ${reason}`,
-      link: `/profile`,
-      metadata: { material, reason }
+      title: 'Upload Rejected ⚠️',
+      message: `Your upload "${material.title}" was rejected. Reason: ${reason}`,
+      link: '/profile'
     });
 
-    // Log Activity
-    await ActivityLog.create({
-      user: req.user._id,
-      action: 'reject',
-      targetId: material._id,
-      targetType: material.type,
-      details: { title: material.title, reason }
-    });
+    // Audit log
+    try {
+      await prisma.activityLog.create({
+        data: {
+          userId: req.user.id,
+          action: 'reject',
+          targetId: material.id,
+          targetType: material.type,
+          details: JSON.stringify({ reason })
+        }
+      });
+    } catch (err) {}
 
     res.status(200).json({
       success: true,
-      message: 'Material rejected successfully',
-      material
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// @desc    Toggle feature status
-// @route   PUT /api/admin/materials/:id/feature
-// @access  Protected (Admin Only)
-exports.toggleFeatureMaterial = async (req, res, next) => {
-  try {
-    const material = await StudyMaterial.findById(req.params.id);
-    if (!material) {
-      return res.status(404).json({ success: false, error: 'Material not found' });
-    }
-
-    material.isFeatured = !material.isFeatured;
-    await material.save();
-
-    res.status(200).json({
-      success: true,
-      message: `Material is now ${material.isFeatured ? 'featured' : 'unfeatured'}`,
-      material
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// @desc    Delete material (Admin)
-// @route   DELETE /api/admin/materials/:id
-// @access  Protected (Admin Only)
-exports.deleteMaterialAdmin = async (req, res, next) => {
-  try {
-    const material = await StudyMaterial.findById(req.params.id);
-    if (!material) {
-      return res.status(404).json({ success: false, error: 'Material not found' });
-    }
-
-    // Delete file using service
-    await deleteFile(material.filePublicId);
-
-    // If was approved, decrement total uploads count
-    if (material.status === 'approved') {
-      await User.findByIdAndUpdate(material.uploadedBy, { $inc: { totalUploads: -1 } });
-    }
-
-    await StudyMaterial.findByIdAndDelete(req.params.id);
-
-    res.status(200).json({
-      success: true,
-      message: 'Material deleted by administrator'
+      message: 'Material submission rejected successfully',
+      material: updated
     });
   } catch (error) {
     next(error);
@@ -221,7 +219,13 @@ exports.deleteMaterialAdmin = async (req, res, next) => {
 // @access  Protected (Admin Only)
 exports.getUsers = async (req, res, next) => {
   try {
-    const users = await User.find().sort({ createdAt: -1 });
+    const users = await prisma.user.findMany({
+      orderBy: { name: 'asc' }
+    });
+
+    // Sanitize passwords
+    users.forEach(u => delete u.password);
+
     res.status(200).json({
       success: true,
       count: users.length,
@@ -232,126 +236,111 @@ exports.getUsers = async (req, res, next) => {
   }
 };
 
-// @desc    Update user role
+// @desc    Change user role
 // @route   PUT /api/admin/users/:id/role
 // @access  Protected (SuperAdmin Only)
 exports.updateUserRole = async (req, res, next) => {
   try {
     const { role } = req.body;
     if (!['user', 'admin', 'superadmin'].includes(role)) {
-      return res.status(400).json({ success: false, error: 'Invalid user role' });
+      return res.status(400).json({ success: false, error: 'Invalid role assignment' });
     }
 
-    const user = await User.findById(req.params.id);
+    const user = await prisma.user.findUnique({ where: { id: req.params.id } });
     if (!user) {
       return res.status(404).json({ success: false, error: 'User not found' });
     }
 
-    user.role = role;
-    await user.save();
+    const updated = await prisma.user.update({
+      where: { id: user.id },
+      data: { role }
+    });
+
+    delete updated.password;
 
     res.status(200).json({
       success: true,
       message: `User role updated to ${role}`,
-      user
+      user: updated
     });
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Ban or Unban user
+// @desc    Ban / Unban user
 // @route   PUT /api/admin/users/:id/ban
 // @access  Protected (Admin Only)
 exports.toggleUserBan = async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await prisma.user.findUnique({ where: { id: req.params.id } });
     if (!user) {
       return res.status(404).json({ success: false, error: 'User not found' });
     }
 
-    // Prevent banning superadmins
     if (user.role === 'superadmin') {
-      return res.status(400).json({ success: false, error: 'Superadmin cannot be banned' });
+      return res.status(400).json({ success: false, error: 'Superadmin account cannot be banned' });
     }
 
-    user.isBanned = !user.isBanned;
-    await user.save();
+    const updated = await prisma.user.update({
+      where: { id: user.id },
+      data: { isBanned: !user.isBanned }
+    });
+
+    delete updated.password;
 
     res.status(200).json({
       success: true,
-      message: `User has been ${user.isBanned ? 'banned' : 'unbanned'}`,
-      user
+      message: updated.isBanned ? 'User has been banned' : 'User access restored',
+      user: updated
     });
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Delete user
+// @desc    Delete user profile permanently
 // @route   DELETE /api/admin/users/:id
 // @access  Protected (SuperAdmin Only)
 exports.deleteUser = async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await prisma.user.findUnique({ where: { id: req.params.id } });
     if (!user) {
       return res.status(404).json({ success: false, error: 'User not found' });
     }
 
     if (user.role === 'superadmin') {
-      return res.status(400).json({ success: false, error: 'Superadmin cannot be deleted' });
+      return res.status(400).json({ success: false, error: 'Superadmin account cannot be deleted' });
     }
 
-    // Delete all materials uploaded by user
-    const materials = await StudyMaterial.find({ uploadedBy: user._id });
-    for (const mat of materials) {
-      await deleteFile(mat.filePublicId);
-    }
-    await StudyMaterial.deleteMany({ uploadedBy: user._id });
-    await User.findByIdAndDelete(req.params.id);
+    await prisma.user.delete({ where: { id: user.id } });
 
     res.status(200).json({
       success: true,
-      message: 'User and all associated materials deleted successfully'
+      message: 'User account and uploads deleted successfully'
     });
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Create announcement
+// @desc    Create global alert banner
 // @route   POST /api/admin/announcements
 // @access  Protected (Admin Only)
 exports.createAnnouncement = async (req, res, next) => {
   try {
     const { title, content, type, expiresAt, isGlobal } = req.body;
-    if (!title || !content) {
-      return res.status(400).json({ success: false, error: 'Title and content are required' });
-    }
 
-    const announcement = await Announcement.create({
-      title,
-      content,
-      type,
-      expiresAt,
-      isGlobal,
-      createdBy: req.user._id
-    });
-
-    // Notify all users if global
-    if (isGlobal) {
-      const users = await User.find({ isBanned: false });
-      for (const u of users) {
-        await createNotification({
-          user: u._id,
-          type: 'announcement',
-          title: `New Announcement: ${title}`,
-          message: content.substring(0, 100) + '...',
-          link: '/',
-          metadata: { announcement }
-        });
+    const announcement = await prisma.announcement.create({
+      data: {
+        title,
+        content,
+        type: type || 'info',
+        expiresAt: expiresAt ? new Date(expiresAt) : null,
+        isGlobal: isGlobal !== undefined ? !!isGlobal : true,
+        createdById: req.user.id
       }
-    }
+    });
 
     res.status(201).json({
       success: true,
@@ -364,10 +353,13 @@ exports.createAnnouncement = async (req, res, next) => {
 
 // @desc    Get all announcements
 // @route   GET /api/admin/announcements
-// @access  Protected (Admin/User)
+// @access  Protected (Admin Only)
 exports.getAnnouncements = async (req, res, next) => {
   try {
-    const announcements = await Announcement.find().populate('createdBy', 'name').sort({ createdAt: -1 });
+    const announcements = await prisma.announcement.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+
     res.status(200).json({
       success: true,
       announcements
@@ -377,21 +369,33 @@ exports.getAnnouncements = async (req, res, next) => {
   }
 };
 
-// @desc    Update announcement
+// @desc    Update announcement details
 // @route   PUT /api/admin/announcements/:id
 // @access  Protected (Admin Only)
 exports.updateAnnouncement = async (req, res, next) => {
   try {
-    const announcement = await Announcement.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true
-    });
+    const { title, content, type, expiresAt, isActive } = req.body;
+
+    const announcement = await prisma.announcement.findUnique({ where: { id: req.params.id } });
     if (!announcement) {
       return res.status(404).json({ success: false, error: 'Announcement not found' });
     }
+
+    const dataToUpdate = {};
+    if (title !== undefined) dataToUpdate.title = title;
+    if (content !== undefined) dataToUpdate.content = content;
+    if (type !== undefined) dataToUpdate.type = type;
+    if (expiresAt !== undefined) dataToUpdate.expiresAt = expiresAt ? new Date(expiresAt) : null;
+    if (isActive !== undefined) dataToUpdate.isActive = !!isActive;
+
+    const updated = await prisma.announcement.update({
+      where: { id: announcement.id },
+      data: dataToUpdate
+    });
+
     res.status(200).json({
       success: true,
-      announcement
+      announcement: updated
     });
   } catch (error) {
     next(error);
@@ -403,140 +407,98 @@ exports.updateAnnouncement = async (req, res, next) => {
 // @access  Protected (Admin Only)
 exports.deleteAnnouncement = async (req, res, next) => {
   try {
-    const announcement = await Announcement.findByIdAndDelete(req.params.id);
+    const announcement = await prisma.announcement.findUnique({ where: { id: req.params.id } });
     if (!announcement) {
       return res.status(404).json({ success: false, error: 'Announcement not found' });
     }
+
+    await prisma.announcement.delete({ where: { id: announcement.id } });
+
     res.status(200).json({
       success: true,
-      message: 'Announcement deleted successfully'
+      message: 'Announcement deleted'
     });
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Get advanced analytical data for Recharts
+// @desc    Get chart statistics
 // @route   GET /api/admin/analytics
 // @access  Protected (Admin Only)
 exports.getAnalytics = async (req, res, next) => {
   try {
-    // 1. Uploads per day (last 30 days)
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
-    const uploadsOverTime = await StudyMaterial.aggregate([
-      { $match: { createdAt: { $gte: thirtyDaysAgo } } },
-      {
-        $group: {
-          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-          count: { $sum: 1 }
-        }
+    // 1. Uploads frequency by day over the last 30 days
+    // Neon PostgreSQL trunc date grouping
+    const uploadsOverTime = await prisma.$queryRaw`
+      SELECT TO_CHAR("createdAt", 'YYYY-MM-DD') as "_id", COUNT(*)::int as "count"
+      FROM "StudyMaterial"
+      WHERE "createdAt" > NOW() - INTERVAL '30 days'
+      GROUP BY "_id"
+      ORDER BY "_id" ASC
+    `;
+
+    // 2. Resource splits (notes vs papers)
+    const typeDistribution = await prisma.studyMaterial.groupBy({
+      by: ['type'],
+      _count: { id: true }
+    });
+    const formattedType = typeDistribution.map(item => ({
+      _id: item.type,
+      count: item._count.id
+    }));
+
+    // 3. Uploads counts by subject
+    const subjectDistribution = await prisma.studyMaterial.groupBy({
+      by: ['subjectCode'],
+      _count: { id: true },
+      orderBy: {
+        _count: { id: 'desc' }
       },
-      { $sort: { _id: 1 } }
-    ]);
-
-    // 2. Notes vs Papers distribution
-    const typeDistribution = await StudyMaterial.aggregate([
-      { $group: { _id: '$type', count: { $sum: 1 } } }
-    ]);
-
-    // 3. Uploads by subject (top 5)
-    const subjectDistribution = await StudyMaterial.aggregate([
-      { $group: { _id: '$subjectCode', count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 5 }
-    ]);
-
-    // 4. Top users by reputation
-    const topUsers = await User.find({ isBanned: false })
-      .select('name email reputation totalUploads')
-      .sort({ reputation: -1 })
-      .limit(5);
-
-    // 5. Active users over time (grouped by last active in last 7 days)
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const activeUsersCount = await User.countDocuments({ lastActive: { $gte: sevenDaysAgo } });
+      take: 5
+    });
+    const formattedSubject = subjectDistribution.map(item => ({
+      _id: item.subjectCode,
+      count: item._count.id
+    }));
 
     res.status(200).json({
       success: true,
-      uploadsOverTime,
-      typeDistribution,
-      subjectDistribution,
-      topUsers,
-      activeUsersCount
+      uploadsOverTime: uploadsOverTime || [],
+      typeDistribution: formattedType,
+      subjectDistribution: formattedSubject
     });
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Export analytics data as CSV file
+// @desc    Export activity log to CSV file format
 // @route   GET /api/admin/analytics/export
 // @access  Protected (Admin Only)
 exports.exportAnalyticsCSV = async (req, res, next) => {
   try {
-    const materials = await StudyMaterial.find()
-      .populate('uploadedBy', 'name email')
-      .sort({ createdAt: -1 });
+    const logs = await prisma.activityLog.findMany({
+      include: {
+        user: { select: { name: true, email: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
 
-    let csvContent = 'ID,Title,Type,Subject Code,Subject Name,Semester,University,Downloads,Views,Uploaded By,Email,Status,Uploaded At\n';
+    let csvContent = 'ID,User Name,User Email,Action,Target ID,Target Type,Details,IP Address,Browser footprint,Timestamp\n';
 
-    materials.forEach(mat => {
-      const uploaderName = mat.uploadedBy ? mat.uploadedBy.name : 'Unknown';
-      const uploaderEmail = mat.uploadedBy ? mat.uploadedBy.email : 'Unknown';
-      const escapedTitle = mat.title.replace(/"/g, '""');
+    logs.forEach(log => {
+      const uName = log.user ? `"${log.user.name.replace(/"/g, '""')}"` : 'Guest';
+      const uEmail = log.user ? log.user.email : 'N/A';
+      const details = log.details ? `"${log.details.replace(/"/g, '""')}"` : '';
+      const uAgent = log.userAgent ? `"${log.userAgent.replace(/"/g, '""')}"` : '';
 
-      csvContent += `"${mat._id}","${escapedTitle}","${mat.type}","${mat.subjectCode}","${mat.subjectName || ''}",${mat.semester},"${mat.university}",${mat.downloads},${mat.views},"${uploaderName}","${uploaderEmail}","${mat.status}","${mat.createdAt.toISOString()}"\n`;
+      csvContent += `${log.id},${uName},${uEmail},${log.action},${log.targetId || ''},${log.targetType || ''},${details},${log.ip || ''},${uAgent},${log.createdAt.toISOString()}\n`;
     });
 
     res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', 'attachment; filename=kslu_circle_analytics.csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=kslu_circle_activity_audit.csv');
     res.status(200).send(csvContent);
-  } catch (error) {
-    next(error);
-  }
-};
-
-// @desc    Get activity logs
-// @route   GET /api/admin/activity-logs
-// @access  Protected (Admin Only)
-exports.getActivityLogs = async (req, res, next) => {
-  try {
-    const { action, userId, targetType } = req.query;
-    const filter = {};
-
-    if (action) filter.action = action;
-    if (userId) filter.user = userId;
-    if (targetType) filter.targetType = targetType;
-
-    const logs = await ActivityLog.find(filter)
-      .populate('user', 'name email role')
-      .sort({ createdAt: -1 })
-      .limit(100);
-
-    res.status(200).json({
-      success: true,
-      count: logs.length,
-      logs
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// @desc    Update system settings (mock)
-// @route   PUT /api/admin/settings
-// @access  Protected (Admin Only)
-exports.updateSettings = async (req, res, next) => {
-  try {
-    // Return success mock settings response
-    res.status(200).json({
-      success: true,
-      message: 'System settings updated successfully',
-      settings: req.body
-    });
   } catch (error) {
     next(error);
   }

@@ -4,19 +4,19 @@ const logger = require('../utils/logger');
 let transporter;
 
 const isMailConfigured = !!(
-  process.env.SMTP_HOST &&
-  process.env.SMTP_PORT &&
-  process.env.SMTP_USER &&
-  process.env.SMTP_PASS
+  (process.env.SMTP_HOST || process.env.EMAIL_HOST) &&
+  (process.env.SMTP_PORT || process.env.EMAIL_PORT) &&
+  (process.env.SMTP_USER || process.env.EMAIL_USER) &&
+  (process.env.SMTP_PASS || process.env.EMAIL_PASS)
 );
 
 if (isMailConfigured) {
   transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT),
+    host: process.env.SMTP_HOST || process.env.EMAIL_HOST,
+    port: parseInt(process.env.SMTP_PORT || process.env.EMAIL_PORT),
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS
+      user: process.env.SMTP_USER || process.env.EMAIL_USER,
+      pass: process.env.SMTP_PASS || process.env.EMAIL_PASS
     }
   });
   logger.info('Nodemailer SMTP transporter initialized.');
@@ -25,7 +25,7 @@ if (isMailConfigured) {
 }
 
 const sendEmail = async ({ to, subject, html }) => {
-  const fromEmail = process.env.FROM_EMAIL || 'noreply@kslucircle.com';
+  const fromEmail = process.env.FROM_EMAIL || process.env.EMAIL_FROM || 'noreply@kslucircle.com';
   const fromName = process.env.FROM_NAME || 'KSLU Circle';
 
   if (isMailConfigured) {
