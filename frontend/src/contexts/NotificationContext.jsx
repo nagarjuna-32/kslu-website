@@ -40,7 +40,10 @@ export const NotificationProvider = ({ children }) => {
       fetchUnreadCount();
 
       let socketUrl = import.meta.env.VITE_SOCKET_URL;
-      if (!socketUrl) {
+      const isWindowLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const isSocketLocalhost = socketUrl && (socketUrl.includes('localhost') || socketUrl.includes('127.0.0.1'));
+
+      if (!socketUrl || (!isWindowLocalhost && isSocketLocalhost)) {
         const apiUrl = api.defaults.baseURL;
         socketUrl = apiUrl.replace('/api', '');
       }
