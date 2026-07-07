@@ -20,22 +20,23 @@ const matchPassword = async (enteredPassword, hashedPassword) => {
 };
 
 // Cookie settings helper
-const getCookieOptions = () => {
-  const isProd = process.env.NODE_ENV === 'production';
+const getCookieOptions = (req) => {
+  const host = req.get('host') || '';
+  const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1');
   return {
     expires: new Date(
       Date.now() + (parseInt(process.env.COOKIE_EXPIRE) || 7) * 24 * 60 * 60 * 1000
     ),
     httpOnly: true,
-    secure: isProd,
-    sameSite: isProd ? 'none' : 'lax'
+    secure: !isLocalhost,
+    sameSite: isLocalhost ? 'lax' : 'none'
   };
 };
 
 // Send JWT token in cookie
 const sendTokenResponse = async (user, statusCode, req, res, actionType) => {
   const token = getSignedJwtToken(user);
-  const options = getCookieOptions();
+  const options = getCookieOptions(req);
 
   // Create audit log
   try {
