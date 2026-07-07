@@ -5,13 +5,11 @@ let io;
 const userSockets = new Map(); // Maps userId -> socketId
 
 const initSocket = (server) => {
-  const allowedOrigin = process.env.NODE_ENV === 'production'
-    ? (process.env.CLIENT_URL_PROD || 'https://kslucircle.com')
-    : (process.env.CLIENT_URL || 'http://localhost:5173');
-
   io = socketIo(server, {
     cors: {
-      origin: allowedOrigin,
+      origin: (origin, callback) => {
+        callback(null, true);
+      },
       methods: ['GET', 'POST', 'PUT', 'DELETE'],
       credentials: true
     }

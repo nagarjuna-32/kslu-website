@@ -34,12 +34,10 @@ app.use(helmet({
 }));
 
 // CORS Configuration
-const allowedOrigin = process.env.NODE_ENV === 'production'
-  ? (process.env.CLIENT_URL_PROD || 'https://kslucircle.com')
-  : (process.env.CLIENT_URL || 'http://localhost:5173');
-
 app.use(cors({
-  origin: allowedOrigin,
+  origin: (origin, callback) => {
+    callback(null, true);
+  },
   credentials: true
 }));
 
