@@ -3,12 +3,19 @@ const fs = require('fs');
 const path = require('path');
 const logger = require('../utils/logger');
 
-// Configure Cloudinary if keys are provided
-const isCloudinaryConfigured = !!(
+// Configure Cloudinary if keys are provided and are not dummy placeholders
+const hasCloudinaryKeys = !!(
   process.env.CLOUDINARY_CLOUD_NAME && 
   process.env.CLOUDINARY_API_KEY && 
   process.env.CLOUDINARY_API_SECRET
 );
+
+const isDummyCloudinary = 
+  (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_CLOUD_NAME.includes('your-')) ||
+  (process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_KEY.includes('your-')) ||
+  (process.env.CLOUDINARY_API_SECRET && process.env.CLOUDINARY_API_SECRET.includes('your-'));
+
+const isCloudinaryConfigured = hasCloudinaryKeys && !isDummyCloudinary;
 
 if (isCloudinaryConfigured) {
   cloudinary.config({
