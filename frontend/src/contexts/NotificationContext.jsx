@@ -39,7 +39,12 @@ export const NotificationProvider = ({ children }) => {
       fetchNotifications();
       fetchUnreadCount();
 
-      const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+      let socketUrl = import.meta.env.VITE_SOCKET_URL;
+      if (!socketUrl) {
+        const apiUrl = api.defaults.baseURL;
+        socketUrl = apiUrl.replace('/api', '');
+      }
+
       const newSocket = io(socketUrl, {
         withCredentials: true
       });
