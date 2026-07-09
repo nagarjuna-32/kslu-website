@@ -47,6 +47,51 @@ const Login = () => {
     }
   };
 
+  // Real Google Sign-In with Mock Fallback
+  const handleGoogleLogin = async () => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!clientId || clientId === 'your-google-client-id') {
+      toast.success('Using mock Google Login (no Client ID configured)');
+      await handleGoogleMock();
+      return;
+    }
+
+    if (!window.google) {
+      toast.error('Google Sign-In SDK not loaded. Please try again in a moment.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const client = window.google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'openid email profile',
+        callback: async (tokenResponse) => {
+          if (tokenResponse && tokenResponse.access_token) {
+            try {
+              await googleLogin({ token: tokenResponse.access_token });
+              navigate('/');
+            } catch (err) {
+              // Error is already shown in toast by AuthContext
+            } finally {
+              setLoading(false);
+            }
+          } else {
+            setLoading(false);
+          }
+        },
+        error_callback: () => {
+          setLoading(false);
+          toast.error('Google authorization failed');
+        }
+      });
+      client.requestAccessToken();
+    } catch (err) {
+      setLoading(false);
+      toast.error('Failed to initialize Google Sign-in');
+    }
+  };
+
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-10 transition-colors duration-300">
       <div className="max-w-md w-full space-y-8 bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800 rounded-3xl p-6 sm:p-10 shadow-lg">
@@ -151,9 +196,9 @@ const Login = () => {
           </span>
         </div>
 
-        {/* Google Mock Button */}
+        {/* Google Button */}
         <button
-          onClick={handleGoogleMock}
+          onClick={handleGoogleLogin}
           disabled={loading}
           className="w-full flex items-center justify-center gap-2 py-2.5 border border-gray-250 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-950 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm font-semibold text-gray-700 dark:text-gray-300"
         >

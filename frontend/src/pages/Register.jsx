@@ -11,7 +11,7 @@ const Register = () => {
 
   const [loading, setLoading] = useState(false);
 
-  const { register, handleSubmit, watch, formState: { errors } } = useForm();
+  const { register, handleSubmit, watch, getValues, formState: { errors } } = useForm();
   
   const passwordValue = watch('password');
 
@@ -50,6 +50,61 @@ const Register = () => {
       toast.error('Google registration failed');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Real Google Sign-up/Login with Mock Fallback
+  const handleGoogleLogin = async () => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    
+    // Retrieve any fields filled in the form to associate with Google account
+    const values = getValues();
+    const college = values.college || undefined;
+    const yearOfStudy = values.yearOfStudy ? parseInt(values.yearOfStudy) : undefined;
+
+    if (!clientId || clientId === 'your-google-client-id') {
+      toast.success('Using mock Google Registration (no Client ID configured)');
+      await handleGoogleMock();
+      return;
+    }
+
+    if (!window.google) {
+      toast.error('Google Sign-In SDK not loaded. Please try again in a moment.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const client = window.google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'openid email profile',
+        callback: async (tokenResponse) => {
+          if (tokenResponse && tokenResponse.access_token) {
+            try {
+              await googleLogin({ 
+                token: tokenResponse.access_token,
+                college,
+                yearOfStudy
+              });
+              navigate('/');
+            } catch (err) {
+              // Error is already shown in toast by AuthContext
+            } finally {
+              setLoading(false);
+            }
+          } else {
+            setLoading(false);
+          }
+        },
+        error_callback: () => {
+          setLoading(false);
+          toast.error('Google authorization failed');
+        }
+      });
+      client.requestAccessToken();
+    } catch (err) {
+      setLoading(false);
+      toast.error('Failed to initialize Google Sign-in');
     }
   };
 
@@ -254,11 +309,11 @@ const Register = () => {
           </span>
         </div>
 
-        {/* Google Mock */}
+        {/* Google Sign-in */}
         <button
-          onClick={handleGoogleMock}
+          onClick={handleGoogleLogin}
           disabled={loading}
-          className="w-full flex items-center justify-center gap-2 py-2.5 border border-gray-250 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-955 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm font-semibold text-gray-700 dark:text-gray-300"
+          className="w-full flex items-center justify-center gap-2 py-2.5 border border-gray-255 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-955 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm font-semibold text-gray-700 dark:text-gray-300"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24" width="24" height="24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />

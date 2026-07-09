@@ -164,7 +164,29 @@ exports.login = async (req, res, next) => {
 // @access  Public
 exports.googleLogin = async (req, res, next) => {
   try {
-    const { name, email, googleId, avatar, college, yearOfStudy } = req.body;
+    let { name, email, googleId, avatar, college, yearOfStudy, token } = req.body;
+
+    if (token) {
+      try {
+        // Fetch user profile securely from Google using access token
+        const googleRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        if (!googleRes.ok) {
+          return res.status(400).json({ success: false, error: 'Failed to verify Google access token' });
+        }
+        const profile = await googleRes.json();
+        email = profile.email;
+        googleId = profile.sub; // Google ID
+        name = profile.name;
+        avatar = profile.picture;
+      } catch (err) {
+        return res.status(400).json({ success: false, error: 'Error validating Google access token: ' + err.message });
+      }
+    }
+
     if (!email || !googleId) {
       return res.status(400).json({ success: false, error: 'Email and Google ID are required' });
     }
@@ -203,14 +225,18 @@ exports.googleLogin = async (req, res, next) => {
           email: emailLower,
           googleId,
           avatar: avatar || '',
-          college,
+          college: college || null,
           yearOfStudy: yearOfStudy ? parseInt(yearOfStudy) : null,
           isVerified: true // Google accounts are pre-verified
         }
       });
       
       const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-      await emailService.sendWelcomeEmail(user, `${clientUrl}/login`);
+      try {
+        await emailService.sendWelcomeEmail(user, `${clientUrl}/login`);
+      } catch (emailErr) {
+        logger.error(`Error sending welcome email: ${emailErr.message}`);
+      }
     }
 
     await sendTokenResponse(user, 200, req, res, 'login');
