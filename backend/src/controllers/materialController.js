@@ -183,7 +183,9 @@ exports.uploadMaterial = async (req, res, next) => {
         fileUrl: uploadResult.fileUrl,
         filePublicId: uploadResult.filePublicId,
         fileSize: uploadResult.fileSize,
-        uploadedById: req.user.id
+        uploadedById: req.user.id,
+        status: process.env.NODE_ENV === 'development' ? 'approved' : 'pending',
+        approvedAt: process.env.NODE_ENV === 'development' ? new Date() : null
       }
     });
 
@@ -242,9 +244,9 @@ exports.updateMaterial = async (req, res, next) => {
       dataToUpdate.tags = tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0).join(',');
     }
 
-    // If edited by a user, reset status to pending for moderation
+    // If edited by a user, reset status to pending for moderation (unless in development)
     if (req.user.role === 'user') {
-      dataToUpdate.status = 'pending';
+      dataToUpdate.status = process.env.NODE_ENV === 'development' ? 'approved' : 'pending';
     }
 
     const updated = await prisma.studyMaterial.update({
