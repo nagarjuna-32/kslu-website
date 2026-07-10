@@ -109,6 +109,7 @@ exports.register = async (req, res, next) => {
         password: hashedPassword,
         college,
         yearOfStudy: yearOfStudy ? parseInt(yearOfStudy) : null,
+        role: emailLower === 'kslucircle@gmail.com' ? 'superadmin' : 'user',
         verificationToken,
         verificationTokenExpire
       }
@@ -153,7 +154,16 @@ exports.login = async (req, res, next) => {
       return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
 
-    await sendTokenResponse(user, 200, req, res, 'login');
+    // Auto-promote kslucircle@gmail.com to superadmin if not already
+    let loggedInUser = user;
+    if (emailLower === 'kslucircle@gmail.com' && user.role !== 'superadmin') {
+      loggedInUser = await prisma.user.update({
+        where: { id: user.id },
+        data: { role: 'superadmin' }
+      });
+    }
+
+    await sendTokenResponse(loggedInUser, 200, req, res, 'login');
   } catch (error) {
     next(error);
   }
@@ -204,14 +214,20 @@ exports.googleLogin = async (req, res, next) => {
     });
 
     if (user) {
-      // Connect Google ID if not connected
+      // Connect Google ID and promote kslucircle@gmail.com to superadmin if not already
+      let dataToUpdate = {};
       if (!user.googleId || (avatar && !user.avatar)) {
+        dataToUpdate.googleId = user.googleId || googleId;
+        dataToUpdate.avatar = user.avatar || avatar;
+      }
+      if (emailLower === 'kslucircle@gmail.com' && user.role !== 'superadmin') {
+        dataToUpdate.role = 'superadmin';
+      }
+
+      if (Object.keys(dataToUpdate).length > 0) {
         user = await prisma.user.update({
           where: { id: user.id },
-          data: {
-            googleId: user.googleId || googleId,
-            avatar: user.avatar || avatar
-          }
+          data: dataToUpdate
         });
       }
       if (user.isBanned) {
@@ -227,6 +243,7 @@ exports.googleLogin = async (req, res, next) => {
           avatar: avatar || '',
           college: college || null,
           yearOfStudy: yearOfStudy ? parseInt(yearOfStudy) : null,
+          role: emailLower === 'kslucircle@gmail.com' ? 'superadmin' : 'user',
           isVerified: true // Google accounts are pre-verified
         }
       });
