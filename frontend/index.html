@@ -2,10 +2,37 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="KSLU Circle - Peer-to-peer law student repository for lecture notes, exam guides, and university question papers for Karnataka law schools." />
-    <title>KSLU Circle - Law Study Resources & Notes</title>
+    
+    <!-- Primary SEO Meta Tags (Fallbacks - Will be overridden dynamically by SEO.jsx) -->
+    <title>KSLU Circle - Law Study Resources, Notes & Question Papers</title>
+    <meta name="description" content="Peer-to-peer law student repository for lecture notes, exam guides, and university question papers for Karnataka law schools." />
+    <meta name="keywords" content="KSLU notes, Karnataka State Law University, law lecture notes, KSLU question papers, law study materials, LLB study guides" />
+    
+    <!-- PWA & Mobile Optimization -->
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#C29A4D" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="KSLU Circle" />
+
+    <!-- Google Search Console Verification -->
+    <meta name="google-site-verification" content="GSC_VERIFICATION_TOKEN_PLACEHOLDER" />
+
+    <!-- Google Analytics 4 (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-S6V4DNV6J4"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-S6V4DNV6J4', {
+        page_path: window.location.pathname,
+      });
+    </script>
+
+    <!-- Google Identity Services client script -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
   </head>
   <body className="bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text transition-colors duration-300">

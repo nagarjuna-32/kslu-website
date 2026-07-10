@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
+import SEO from '../components/common/SEO';
 import { useAuth } from '../contexts/AuthContext';
 import { Mail, Lock, User as UserIcon, GraduationCap, Calendar, ShieldAlert, BookOpen } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -110,6 +111,11 @@ const Register = () => {
 
   return (
     <div className="min-h-[85vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-10 transition-colors duration-300">
+      <SEO 
+        title="Create Account"
+        description="Register for a new KSLU Circle account to start uploading law notes, downloading previous year papers, and helping your peers."
+        canonicalUrl="https://kslucircle.online/register"
+      />
       <div className="max-w-md w-full space-y-8 bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800 rounded-3xl p-6 sm:p-10 shadow-lg">
         
         {/* Header */}

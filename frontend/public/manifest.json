@@ -1,0 +1,36 @@
+{
+  "short_name": "KSLU Circle",
+  "name": "KSLU Circle - Law Student Resource Repository",
+  "description": "Peer-to-peer law student repository for lecture notes, exam guides, and university question papers for Karnataka law schools.",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any apple"
+    },
+    {
+      "src": "/favicon.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0B0F19",
+  "theme_color": "#C29A4D",
+  "display": "standalone",
+  "orientation": "portrait"
+}

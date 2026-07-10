@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import api from '../api/axios';
+import SEO from '../components/common/SEO';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { 
   UploadCloud, FileText, ChevronRight, ChevronLeft, 
@@ -112,6 +113,12 @@ const Upload = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12 transition-colors duration-300">
+      <SEO 
+        title="Upload Study Material"
+        description="Share your lecture notes, summaries, and exam papers with other law students. Contribute to the KSLU Circle repository."
+        canonicalUrl="https://kslucircle.online/upload"
+        robots="noindex, follow"
+      />
       
       {/* Header */}
       <div>

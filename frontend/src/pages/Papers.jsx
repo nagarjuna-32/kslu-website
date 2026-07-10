@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import api from '../api/axios';
+import SEO from '../components/common/SEO';
 import { useAuth } from '../contexts/AuthContext';
 import MaterialCard from '../components/materials/MaterialCard';
 import MaterialFilters from '../components/materials/MaterialFilters';
@@ -94,6 +95,11 @@ const Papers = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 transition-colors duration-300">
+      <SEO 
+        title="KSLU Previous Year Law Question Papers"
+        description="Download KSLU previous year question papers. Find LLB, BA LLB, and BBA LLB university question papers for all semesters."
+        keywords={['KSLU question papers', 'LLB question papers', 'Karnataka law exam papers', 'KSLU semester papers']}
+      />
       
       {/* Header */}
       <div>

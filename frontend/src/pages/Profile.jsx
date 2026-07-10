@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../api/axios';
+import SEO from '../components/common/SEO';
 import MaterialCard from '../components/materials/MaterialCard';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { useForm } from 'react-hook-form';
@@ -132,6 +133,12 @@ const Profile = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 transition-colors duration-300">
+      <SEO 
+        title={`${user.name}'s Profile`}
+        description="View your uploaded law notes, bookmark materials, edit settings, and view reputation points on KSLU Circle."
+        canonicalUrl="https://kslucircle.online/profile"
+        robots="noindex, nofollow"
+      />
       
       {/* Profile Header */}
       <div className="bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800 rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shadow-sm">

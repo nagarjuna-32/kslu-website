@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../api/axios';
+import SEO from '../components/common/SEO';
 import MaterialSearch from '../components/materials/MaterialSearch';
 import MaterialCard from '../components/materials/MaterialCard';
 import LoadingSpinner from '../components/common/LoadingSpinner';
@@ -78,6 +79,7 @@ const Home = () => {
 
   return (
     <div className="space-y-12 pb-16 transition-colors duration-300">
+      <SEO />
       
       {/* Announcements Banner */}
       {announcements.length > 0 && (

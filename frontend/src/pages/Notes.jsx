@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import api from '../api/axios';
+import SEO from '../components/common/SEO';
 import { useAuth } from '../contexts/AuthContext';
 import MaterialCard from '../components/materials/MaterialCard';
 import MaterialFilters from '../components/materials/MaterialFilters';
@@ -94,6 +95,11 @@ const Notes = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 transition-colors duration-300">
+      <SEO 
+        title="KSLU Law Study Notes & Lecture Guides"
+        description="Access free study notes, curriculum summaries, and legal digests uploaded by law students. Explore subject notes for constitutional law, family law, and more."
+        keywords={['KSLU notes', 'LLB notes', 'law study notes', 'Indian law digests']}
+      />
       
       {/* Header */}
       <div>

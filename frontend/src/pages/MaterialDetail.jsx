@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
+import SEO from '../components/common/SEO';
 import { useAuth } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import MaterialCard from '../components/materials/MaterialCard';
@@ -151,6 +152,32 @@ const MaterialDetail = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 transition-colors duration-300">
+      <SEO 
+        title={`${material.title} (${material.subjectCode})`}
+        description={material.description || `Download ${material.title} (${material.subjectName}) law notes and previous year question papers on KSLU Circle.`}
+        keywords={[material.subjectCode, material.subjectName || '', material.type, 'KSLU notes']}
+        canonicalUrl={`https://kslucircle.online/materials/${material.id}`}
+        ogType="article"
+        schemaData={{
+          "@context": "https://schema.org",
+          "@type": "CreativeWork",
+          "name": material.title,
+          "description": material.description || `Law study resource for ${material.subjectName || 'KSLU subjects'} (${material.subjectCode}).`,
+          "educationalLevel": `${material.semester} Semester`,
+          "inLanguage": "en",
+          "genre": material.type === 'note' ? 'Lecture Notes' : 'Previous Year Question Paper',
+          "keywords": `${material.subjectCode}, KSLU, Law, ${material.type}`,
+          "publisher": {
+            "@type": "Organization",
+            "name": "KSLU Circle",
+            "url": "https://kslucircle.online"
+          },
+          "author": {
+            "@type": "Person",
+            "name": material.uploadedBy?.name || "KSLU Circle Contributor"
+          }
+        }}
+      />
       
       {/* Breadcrumbs / Back button */}
       <div className="flex justify-between items-center">

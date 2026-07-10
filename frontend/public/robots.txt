@@ -1,0 +1,11 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /reset-password/
+
+# Host
+Host: https://kslucircle.online
+
+# Sitemap
+Sitemap: https://kslucircle.online/sitemap.xml
