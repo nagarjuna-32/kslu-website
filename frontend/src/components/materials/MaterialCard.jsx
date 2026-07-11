@@ -98,15 +98,15 @@ const MaterialCard = ({ material, initialBookmarked = false, onBookmarkToggle = 
   return (
     <div 
       onClick={handleCardClick}
-      className="group cursor-pointer bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800 hover:border-secondary dark:hover:border-secondary rounded-2xl p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1"
+      className="group cursor-pointer bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800/80 hover:border-slate-400 dark:hover:border-secondary rounded-2xl p-5 flex flex-col justify-between shadow-[0_2px_8px_-3px_rgba(0,0,0,0.08),0_1px_4px_-2px_rgba(0,0,0,0.04)] hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
     >
       <div>
         {/* Top Header Badge */}
         <div className="flex justify-between items-center mb-3">
           <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold tracking-wide uppercase ${
             material.type === 'note' 
-              ? 'bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400' 
-              : 'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400'
+              ? 'bg-slate-100 dark:bg-gray-800 text-slate-700 dark:text-gray-300' 
+              : 'bg-amber-50/80 dark:bg-secondary/10 text-amber-600 dark:text-secondary'
           }`}>
             {material.type === 'note' ? '📝 Note' : '📄 Paper'}
           </span>

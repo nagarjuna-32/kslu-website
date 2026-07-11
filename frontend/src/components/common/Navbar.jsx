@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNotifications } from '../../contexts/NotificationContext';
+import { useTranslation } from '../../contexts/LanguageContext';
 import { 
   Sun, Moon, Bell, Menu, X, LogOut, User as UserIcon, 
   Shield, Bookmark, Upload, BookOpen, Trash2, CheckSquare 
@@ -12,6 +13,7 @@ const Navbar = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
+  const { language, toggleLanguage, t } = useTranslation();
 
   const [isOpen, setIsOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
@@ -55,60 +57,69 @@ const Navbar = () => {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <nav className="sticky top-0 z-50 backdrop-blur-md bg-white/80 dark:bg-dark-bg/85 border-b border-gray-200 dark:border-gray-800 transition-colors duration-300">
+    <nav className="sticky top-0 z-50 backdrop-blur-md bg-white/85 dark:bg-slate-900/85 border-b border-slate-200 dark:border-slate-800 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center">
             <Link to="/" className="flex items-center gap-2 group">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-primary to-secondary flex items-center justify-center shadow-md group-hover:scale-105 transition-all">
-                <BookOpen className="w-5 h-5 text-white" />
+              <div className="w-9 h-9 rounded-xl bg-royal dark:bg-secondary flex items-center justify-center shadow-md group-hover:scale-105 transition-all">
+                <BookOpen className="w-5 h-5 text-white dark:text-primary" />
               </div>
-              <span className="text-xl font-bold tracking-tight text-primary dark:text-white">
-                KSLU <span className="text-secondary">Circle</span>
+              <span className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
+                KSLU <span className="text-royal dark:text-secondary">Circle</span>
               </span>
             </Link>
           </div>
-
+          
           {/* Desktop Nav Links */}
           <div className="hidden md:flex items-center space-x-6">
             <Link 
               to="/" 
-              className={`text-sm font-medium transition-colors ${isActive('/') ? 'text-secondary font-semibold' : 'text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-white'}`}
+              className={`text-xs font-bold transition-colors ${isActive('/') ? 'text-royal dark:text-secondary font-black' : 'text-slate-600 dark:text-slate-350 hover:text-royal dark:hover:text-secondary'}`}
             >
-              Home
+              {t('home')}
             </Link>
             <Link 
               to="/notes" 
-              className={`text-sm font-medium transition-colors ${isActive('/notes') ? 'text-secondary font-semibold' : 'text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-white'}`}
+              className={`text-xs font-bold transition-colors ${isActive('/notes') ? 'text-royal dark:text-secondary font-black' : 'text-slate-600 dark:text-slate-350 hover:text-royal dark:hover:text-secondary'}`}
             >
-              Notes
+              {t('notes')}
             </Link>
             <Link 
               to="/papers" 
-              className={`text-sm font-medium transition-colors ${isActive('/papers') ? 'text-secondary font-semibold' : 'text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-white'}`}
+              className={`text-xs font-bold transition-colors ${isActive('/papers') ? 'text-royal dark:text-secondary font-black' : 'text-slate-600 dark:text-slate-350 hover:text-royal dark:hover:text-secondary'}`}
             >
-              Question Papers
+              {t('papers')}
             </Link>
             <Link 
               to="/upload" 
-              className={`text-sm font-medium transition-colors flex items-center gap-1.5 ${isActive('/upload') ? 'text-secondary font-semibold' : 'text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-white'}`}
+              className={`text-xs font-bold transition-colors flex items-center gap-1.5 ${isActive('/upload') ? 'text-royal dark:text-secondary font-black' : 'text-slate-600 dark:text-slate-350 hover:text-royal dark:hover:text-secondary'}`}
             >
-              <Upload className="w-4 h-4" /> Upload
+              <Upload className="w-4 h-4" /> {t('upload')}
             </Link>
           </div>
 
           {/* Action Buttons (Right) */}
           <div className="hidden md:flex items-center space-x-4">
             
+            {/* Language Switch Button */}
+            <button 
+              onClick={toggleLanguage}
+              className="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] font-black text-slate-700 dark:text-slate-350 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-1 hover:scale-[1.02] active:scale-95"
+              aria-label="Toggle Language"
+            >
+              <span>{language === 'en' ? 'ಕನ್ನಡ' : 'English'}</span>
+            </button>
+
             {/* Dark Mode Toggle */}
             <button 
               onClick={toggleTheme}
-              className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
+              className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors"
               aria-label="Toggle Theme"
             >
-              {isDarkMode ? <Sun className="w-5 h-5 text-yellow-500" /> : <Moon className="w-5 h-5 text-primary" />}
+              {isDarkMode ? <Sun className="w-5 h-5 text-yellow-500" /> : <Moon className="w-5 h-5 text-slate-800" />}
             </button>
 
             {/* Notifications Popover */}
@@ -267,38 +278,51 @@ const Navbar = () => {
           <Link 
             to="/" 
             onClick={() => setIsOpen(false)}
-            className={`block px-3 py-2 rounded-lg text-sm font-medium ${isActive('/') ? 'bg-gray-100 dark:bg-gray-800 text-secondary' : 'text-gray-700 dark:text-gray-300'}`}
+            className={`block px-3 py-2 rounded-lg text-sm font-medium ${isActive('/') ? 'bg-slate-100 dark:bg-slate-800 text-royal dark:text-secondary' : 'text-slate-700 dark:text-slate-300'}`}
           >
-            Home
+            {t('home')}
           </Link>
           <Link 
             to="/notes" 
             onClick={() => setIsOpen(false)}
-            className={`block px-3 py-2 rounded-lg text-sm font-medium ${isActive('/notes') ? 'bg-gray-100 dark:bg-gray-800 text-secondary' : 'text-gray-700 dark:text-gray-300'}`}
+            className={`block px-3 py-2 rounded-lg text-sm font-medium ${isActive('/notes') ? 'bg-slate-100 dark:bg-slate-800 text-royal dark:text-secondary' : 'text-slate-700 dark:text-slate-300'}`}
           >
-            Notes
+            {t('notes')}
           </Link>
           <Link 
             to="/papers" 
             onClick={() => setIsOpen(false)}
-            className={`block px-3 py-2 rounded-lg text-sm font-medium ${isActive('/papers') ? 'bg-gray-100 dark:bg-gray-800 text-secondary' : 'text-gray-700 dark:text-gray-300'}`}
+            className={`block px-3 py-2 rounded-lg text-sm font-medium ${isActive('/papers') ? 'bg-slate-100 dark:bg-slate-800 text-royal dark:text-secondary' : 'text-slate-700 dark:text-slate-300'}`}
           >
-            Question Papers
+            {t('papers')}
           </Link>
           <Link 
             to="/upload" 
             onClick={() => setIsOpen(false)}
-            className={`block px-3 py-2 rounded-lg text-sm font-medium ${isActive('/upload') ? 'bg-gray-100 dark:bg-gray-800 text-secondary' : 'text-gray-700 dark:text-gray-300'}`}
+            className={`block px-3 py-2 rounded-lg text-sm font-medium ${isActive('/upload') ? 'bg-slate-100 dark:bg-slate-800 text-royal dark:text-secondary' : 'text-slate-700 dark:text-slate-300'}`}
           >
-            Upload Study Files
+            {t('upload')}
           </Link>
 
+          {/* Mobile Language switch */}
+          <div className="border-t border-slate-100 dark:border-slate-800 pt-2 mt-2 px-3">
+            <button 
+              onClick={() => { toggleLanguage(); setIsOpen(false); }}
+              className="w-full flex items-center justify-between py-2 text-sm font-medium text-slate-700 dark:text-slate-300"
+            >
+              <span>Language / ಭಾಷೆ</span>
+              <span className="text-xs font-black text-royal dark:text-secondary bg-royal/5 dark:bg-secondary/5 px-2.5 py-1 rounded-lg border border-royal/10 dark:border-secondary/10">
+                {language === 'en' ? 'ಕನ್ನಡ' : 'English'}
+              </span>
+            </button>
+          </div>
+
           {isAuthenticated && (
-            <div className="border-t border-gray-100 dark:border-gray-800 pt-2 mt-2 space-y-2">
+            <div className="border-t border-slate-100 dark:border-slate-800 pt-2 mt-2 space-y-2">
               <Link 
                 to="/profile" 
                 onClick={() => setIsOpen(false)}
-                className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
               >
                 Profile Settings
               </Link>
@@ -306,14 +330,14 @@ const Navbar = () => {
                 <Link 
                   to="/admin" 
                   onClick={() => setIsOpen(false)}
-                  className="block px-3 py-2 rounded-lg text-sm font-medium text-amber-500 hover:bg-gray-50 dark:hover:bg-gray-800 font-semibold"
+                  className="block px-3 py-2 rounded-lg text-sm font-medium text-amber-500 hover:bg-slate-50 dark:hover:bg-slate-800 font-semibold"
                 >
                   Admin Panel
                 </Link>
               )}
               <button 
                 onClick={handleLogout}
-                className="w-full text-left block px-3 py-2 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/15"
+                className="w-full text-left block px-3 py-2 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-955/15"
               >
                 Log Out
               </button>
@@ -321,18 +345,18 @@ const Navbar = () => {
           )}
 
           {!isAuthenticated && (
-            <div className="border-t border-gray-100 dark:border-gray-800 pt-3 mt-2 flex flex-col gap-2">
+            <div className="border-t border-slate-100 dark:border-slate-800 pt-3 mt-2 flex flex-col gap-2">
               <Link 
                 to="/login" 
                 onClick={() => setIsOpen(false)}
-                className="w-full text-center py-2 border border-gray-250 dark:border-gray-750 text-sm font-bold text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50"
+                className="w-full text-center py-2 border border-slate-200 dark:border-slate-750 text-sm font-bold text-slate-700 dark:text-slate-350 rounded-lg hover:bg-slate-50"
               >
                 Sign In
               </Link>
               <Link 
                 to="/register" 
                 onClick={() => setIsOpen(false)}
-                className="w-full text-center py-2 bg-primary hover:bg-primary-dark text-sm font-bold text-white rounded-lg shadow-sm"
+                className="w-full text-center py-2 bg-royal hover:bg-slate-850 text-sm font-bold text-white rounded-lg shadow-sm"
               >
                 Register Account
               </Link>
