@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
+import BottomNavbar from './components/common/BottomNavbar';
 import Home from './pages/Home';
 import Notes from './pages/Notes';
 import Papers from './pages/Papers';
@@ -13,6 +14,8 @@ import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Profile from './pages/Profile';
+import CourseDetail from './pages/CourseDetail';
+import SubjectDetail from './pages/SubjectDetail';
 
 // Admin Components
 import AdminLayout from './components/admin/AdminLayout';
@@ -34,11 +37,10 @@ const ProtectedRoute = ({ children }) => {
 
 const AppRoutes = () => {
   return (
-    <div className="flex flex-col min-h-screen bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text transition-colors duration-300">
+    <div className="flex flex-col min-h-screen bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text transition-colors duration-300 pb-16 md:pb-0">
       
-      {/* Conditionally render navbar/footer only if not inside admin layout */}
+      {/* Conditionally render navbar only if not inside admin layout */}
       <Routes>
-        {/* Admin layout path overrides global navbar/footer */}
         <Route path="/admin/*" element={null} />
         <Route path="*" element={<Navbar />} />
       </Routes>
@@ -54,6 +56,10 @@ const AppRoutes = () => {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
+
+          {/* Dynamic SEO Courses/Syllabus */}
+          <Route path="/course/:courseSlug" element={<CourseDetail />} />
+          <Route path="/course/:courseSlug/semester/:semesterNum/subject/:subjectSlug" element={<SubjectDetail />} />
 
           {/* User Protected Views */}
           <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
@@ -76,6 +82,13 @@ const AppRoutes = () => {
         </Routes>
       </div>
 
+      {/* Conditionally render bottom navbar for mobile viewports */}
+      <Routes>
+        <Route path="/admin/*" element={null} />
+        <Route path="*" element={<BottomNavbar />} />
+      </Routes>
+
+      {/* Conditionally render footer only if not inside admin layout */}
       <Routes>
         <Route path="/admin/*" element={null} />
         <Route path="*" element={<Footer />} />
