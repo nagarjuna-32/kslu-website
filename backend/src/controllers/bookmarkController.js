@@ -11,7 +11,7 @@ exports.getBookmarks = async (req, res, next) => {
         material: {
           include: {
             uploadedBy: {
-              select: { id: true, name: true, avatar: true, college: true, reputation: true }
+              select: { id: true, name: true, avatar: true, reputation: true }
             }
           }
         }

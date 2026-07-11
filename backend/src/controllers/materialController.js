@@ -66,7 +66,7 @@ exports.getMaterials = async (req, res, next) => {
       where,
       include: {
         uploadedBy: {
-          select: { id: true, name: true, avatar: true, college: true, reputation: true }
+          select: { id: true, name: true, avatar: true, reputation: true }
         }
       },
       orderBy,
@@ -104,7 +104,7 @@ exports.getMaterial = async (req, res, next) => {
       where: { id: req.params.id },
       include: {
         uploadedBy: {
-          select: { id: true, name: true, avatar: true, college: true, reputation: true, totalUploads: true, createdAt: true }
+          select: { id: true, name: true, avatar: true, reputation: true, totalUploads: true, createdAt: true }
         },
         approvedBy: {
           select: { name: true }
@@ -586,7 +586,7 @@ exports.getFeaturedMaterials = async (req, res, next) => {
       where: { status: 'approved', isFeatured: true },
       include: {
         uploadedBy: {
-          select: { id: true, name: true, avatar: true, reputation: true, college: true }
+          select: { id: true, name: true, avatar: true, reputation: true }
         }
       },
       take: 6
@@ -615,7 +615,7 @@ exports.getPopularMaterials = async (req, res, next) => {
       where: { status: 'approved' },
       include: {
         uploadedBy: {
-          select: { id: true, name: true, avatar: true, reputation: true, college: true }
+          select: { id: true, name: true, avatar: true, reputation: true }
         }
       },
       orderBy: { downloads: 'desc' },
@@ -645,7 +645,7 @@ exports.getRecentMaterials = async (req, res, next) => {
       where: { status: 'approved' },
       include: {
         uploadedBy: {
-          select: { id: true, name: true, avatar: true, reputation: true, college: true }
+          select: { id: true, name: true, avatar: true, reputation: true }
         }
       },
       orderBy: { createdAt: 'desc' },

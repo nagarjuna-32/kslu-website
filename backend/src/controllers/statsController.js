@@ -30,7 +30,6 @@ exports.getPublicStats = async (req, res, next) => {
         name: true,
         avatar: true,
         reputation: true,
-        college: true,
         totalUploads: true
       },
       orderBy: { reputation: 'desc' },

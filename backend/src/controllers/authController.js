@@ -80,7 +80,7 @@ const sendTokenResponse = async (user, statusCode, req, res, actionType) => {
 // @access  Public
 exports.register = async (req, res, next) => {
   try {
-    const { name, email, password, college, yearOfStudy } = req.body;
+    const { name, email, password } = req.body;
 
     const emailLower = email.toLowerCase();
 
@@ -107,8 +107,6 @@ exports.register = async (req, res, next) => {
         name,
         email: emailLower,
         password: hashedPassword,
-        college,
-        yearOfStudy: yearOfStudy ? parseInt(yearOfStudy) : null,
         role: emailLower === 'kslucircle@gmail.com' ? 'superadmin' : 'user',
         verificationToken,
         verificationTokenExpire
@@ -174,7 +172,7 @@ exports.login = async (req, res, next) => {
 // @access  Public
 exports.googleLogin = async (req, res, next) => {
   try {
-    let { name, email, googleId, avatar, college, yearOfStudy, token } = req.body;
+    let { name, email, googleId, avatar, token } = req.body;
 
     if (token) {
       try {
@@ -241,8 +239,6 @@ exports.googleLogin = async (req, res, next) => {
           email: emailLower,
           googleId,
           avatar: avatar || '',
-          college: college || null,
-          yearOfStudy: yearOfStudy ? parseInt(yearOfStudy) : null,
           role: emailLower === 'kslucircle@gmail.com' ? 'superadmin' : 'user',
           isVerified: true // Google accounts are pre-verified
         }
@@ -433,12 +429,10 @@ exports.getMe = async (req, res, next) => {
 // @access  Protected
 exports.updateProfile = async (req, res, next) => {
   try {
-    const { name, college, yearOfStudy, avatar, notificationPreferences } = req.body;
+    const { name, avatar, notificationPreferences } = req.body;
 
     const dataToUpdate = {};
     if (name !== undefined) dataToUpdate.name = name;
-    if (college !== undefined) dataToUpdate.college = college;
-    if (yearOfStudy !== undefined) dataToUpdate.yearOfStudy = parseInt(yearOfStudy);
     if (avatar !== undefined) dataToUpdate.avatar = avatar;
     
     if (notificationPreferences) {

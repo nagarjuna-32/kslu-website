@@ -14,8 +14,6 @@ model User {
   password                String?
   googleId                String?         @unique
   avatar                  String          @default("")
-  college                 String?
-  yearOfStudy             Int?
   role                    String          @default("user")
   isVerified              Boolean         @default(false)
   isBanned                Boolean         @default(false)
