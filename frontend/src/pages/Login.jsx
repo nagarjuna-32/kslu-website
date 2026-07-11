@@ -102,9 +102,11 @@ const Login = () => {
         
         {/* Header */}
         <div className="text-center">
-          <div className="mx-auto w-12 h-12 rounded-2xl bg-gradient-to-tr from-primary to-secondary flex items-center justify-center shadow-md mb-4">
-            <BookOpen className="w-6 h-6 text-white" />
-          </div>
+          <img 
+            src="/logo_icon.png" 
+            alt="KSLU Circle" 
+            className="mx-auto w-12 h-12 rounded-2xl object-cover shadow-md mb-4"
+          />
           <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
             Welcome Back
           </h2>

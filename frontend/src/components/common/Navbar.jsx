@@ -64,9 +64,11 @@ const Navbar = () => {
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center">
             <Link to="/" className="flex items-center gap-2 group">
-              <div className="w-9 h-9 rounded-xl bg-royal dark:bg-secondary flex items-center justify-center shadow-md group-hover:scale-105 transition-all">
-                <BookOpen className="w-5 h-5 text-white dark:text-primary" />
-              </div>
+              <img 
+                src="/logo_icon.png" 
+                alt="KSLU Circle" 
+                className="w-9 h-9 rounded-xl object-cover shadow-md group-hover:scale-105 transition-all"
+              />
               <span className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
                 KSLU <span className="text-royal dark:text-secondary">Circle</span>
               </span>

@@ -14,9 +14,11 @@ const Footer = () => {
           {/* Logo / Tagline */}
           <div className="md:col-span-2 space-y-4">
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-royal dark:bg-secondary flex items-center justify-center">
-                <BookOpen className="w-4 h-4 text-white dark:text-primary" />
-              </div>
+              <img 
+                src="/logo_icon.png" 
+                alt="KSLU Circle" 
+                className="w-8 h-8 rounded-lg object-cover"
+              />
               <span className="text-lg font-black tracking-tight text-slate-900 dark:text-white">
                 KSLU <span className="text-royal dark:text-secondary">Circle</span>
               </span>
