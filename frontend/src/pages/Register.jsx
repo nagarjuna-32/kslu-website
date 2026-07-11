@@ -22,9 +22,7 @@ const Register = () => {
       await registerUser({
         name: data.name,
         email: data.email,
-        password: data.password,
-        college: data.college,
-        yearOfStudy: parseInt(data.yearOfStudy)
+        password: data.password
       });
       navigate('/');
     } catch (err) {
@@ -41,9 +39,7 @@ const Register = () => {
         name: 'Karnataka Scholar',
         email: 'scholar@kslucircle.com',
         googleId: 'g_' + Math.round(Math.random() * 1e9),
-        avatar: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=scholar',
-        college: 'KSLU Law School, Hubballi',
-        yearOfStudy: 3
+        avatar: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=scholar'
       };
       await googleLogin(mockGoogleData);
       navigate('/');
@@ -57,11 +53,6 @@ const Register = () => {
   // Real Google Sign-up/Login with Mock Fallback
   const handleGoogleLogin = async () => {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    
-    // Retrieve any fields filled in the form to associate with Google account
-    const values = getValues();
-    const college = values.college || undefined;
-    const yearOfStudy = values.yearOfStudy ? parseInt(values.yearOfStudy) : undefined;
 
     if (!clientId || clientId === 'your-google-client-id') {
       toast.success('Using mock Google Registration (no Client ID configured)');
@@ -83,9 +74,7 @@ const Register = () => {
           if (tokenResponse && tokenResponse.access_token) {
             try {
               await googleLogin({ 
-                token: tokenResponse.access_token,
-                college,
-                yearOfStudy
+                token: tokenResponse.access_token
               });
               navigate('/');
             } catch (err) {
@@ -184,68 +173,28 @@ const Register = () => {
               )}
             </div>
 
-            {/* College Name */}
+            {/* Password */}
             <div>
               <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">
-                Law College Name
+                Password (6+ chars)
               </label>
               <div className="relative flex items-center">
-                <GraduationCap className="absolute left-3 w-5 h-5 text-gray-400 pointer-events-none" />
+                <Lock className="absolute left-3 w-5 h-5 text-gray-400 pointer-events-none" />
                 <input
-                  type="text"
-                  {...register('college', { required: 'College Name is required' })}
-                  placeholder="e.g. Saraswathi Law College, Chitradurga"
+                  type="password"
+                  {...register('password', { 
+                    required: 'Password required',
+                    minLength: { value: 6, message: 'Min 6 characters' }
+                  })}
+                  placeholder="••••••••"
                   className="w-full bg-white dark:bg-gray-950 border border-gray-250 dark:border-gray-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-gray-950 dark:text-white focus:outline-none focus:border-secondary"
                 />
               </div>
-              {errors.college && (
+              {errors.password && (
                 <p className="mt-1 text-xs text-red-500 font-medium flex items-center gap-1">
-                  <ShieldAlert className="w-3.5 h-3.5" /> {errors.college.message}
+                  <ShieldAlert className="w-3.5 h-3.5" /> {errors.password.message}
                 </p>
               )}
-            </div>
-
-            {/* Year of Study & Password Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">
-                  Year of Study
-                </label>
-                <div className="relative flex items-center">
-                  <Calendar className="absolute left-3 w-5 h-5 text-gray-400 pointer-events-none" />
-                  <select
-                    {...register('yearOfStudy', { required: 'Required' })}
-                    className="w-full bg-white dark:bg-gray-955 border border-gray-250 dark:border-gray-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-gray-950 dark:text-white focus:outline-none focus:border-secondary"
-                  >
-                    {Array.from({ length: 5 }, (_, i) => i + 1).map(yr => (
-                      <option key={yr} value={yr}>Year {yr}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">
-                  Password (6+ chars)
-                </label>
-                <div className="relative flex items-center">
-                  <Lock className="absolute left-3 w-5 h-5 text-gray-400 pointer-events-none" />
-                  <input
-                    type="password"
-                    {...register('password', { 
-                      required: 'Password required',
-                      minLength: { value: 6, message: 'Min 6 characters' }
-                    })}
-                    placeholder="••••••••"
-                    className="w-full bg-white dark:bg-gray-955 border border-gray-250 dark:border-gray-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-gray-950 dark:text-white focus:outline-none focus:border-secondary"
-                  />
-                </div>
-                {errors.password && (
-                  <p className="mt-1 text-xs text-red-500 font-medium">
-                    {errors.password.message}
-                  </p>
-                )}
-              </div>
             </div>
 
             {/* Confirm Password */}

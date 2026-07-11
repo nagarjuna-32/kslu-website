@@ -30,8 +30,6 @@ const Profile = () => {
   const { register: regProfile, handleSubmit: handleProfileSubmit } = useForm({
     defaultValues: {
       name: user?.name,
-      college: user?.college,
-      yearOfStudy: user?.yearOfStudy,
       emailPref: user?.notificationPreferences?.email,
       inAppPref: user?.notificationPreferences?.inApp
     }
@@ -76,8 +74,6 @@ const Profile = () => {
     try {
       await updateProfile({
         name: data.name,
-        college: data.college,
-        yearOfStudy: parseInt(data.yearOfStudy),
         notificationPreferences: {
           email: !!data.emailPref,
           inApp: !!data.inAppPref
@@ -376,33 +372,6 @@ const Profile = () => {
                       {...regProfile('name', { required: true })}
                       className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
                     />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('lawCollege')}</label>
-                    <div className="relative flex items-center">
-                      <GraduationCap className="absolute left-3 w-5 h-5 text-slate-450 pointer-events-none" />
-                      <input
-                        type="text"
-                        {...regProfile('college', { required: true })}
-                        className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('yearOfStudy')}</label>
-                    <div className="relative flex items-center">
-                      <Calendar className="absolute left-3 w-5 h-5 text-slate-450 pointer-events-none" />
-                      <select
-                        {...regProfile('yearOfStudy', { required: true })}
-                        className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
-                      >
-                        {[1, 2, 3, 4, 5].map(yr => (
-                          <option key={yr} value={yr}>{yr}</option>
-                        ))}
-                      </select>
-                    </div>
                   </div>
 
                   {/* Notifications */}

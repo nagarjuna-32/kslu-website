@@ -69,8 +69,7 @@ const UserManagement = () => {
 
   const filteredUsers = users.filter(u => 
     u.name.toLowerCase().includes(search.toLowerCase()) ||
-    u.email.toLowerCase().includes(search.toLowerCase()) ||
-    (u.college && u.college.toLowerCase().includes(search.toLowerCase()))
+    u.email.toLowerCase().includes(search.toLowerCase())
   );
 
   const isSuperAdmin = currentUser?.role === 'superadmin';
@@ -93,8 +92,8 @@ const UserManagement = () => {
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by student name, email, college..."
-          className="w-full bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-gray-950 dark:text-white focus:outline-none focus:border-secondary"
+          placeholder="Search by student name or email..."
+          className="w-full bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-gray-955 dark:text-white focus:outline-none focus:border-secondary"
         />
       </div>
 
@@ -112,7 +111,6 @@ const UserManagement = () => {
               <thead>
                 <tr className="bg-gray-50 dark:bg-gray-955/50 border-b border-gray-150 dark:border-gray-850 text-gray-500 dark:text-gray-400 font-bold uppercase">
                   <th className="p-4">Student Info</th>
-                  <th className="p-4">College Details</th>
                   <th className="p-4 text-center">Reputation</th>
                   <th className="p-4 text-center">Uploads</th>
                   <th className="p-4">Access Role</th>
@@ -123,23 +121,17 @@ const UserManagement = () => {
                 {filteredUsers.map(item => (
                   <tr key={item._id} className="hover:bg-gray-55/50 dark:hover:bg-gray-800/10">
                     <td className="p-4">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-3">
                         <img 
                           src={item.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${item.name}`} 
-                          alt="Avatar" 
+                          alt={item.name}
                           className="w-8 h-8 rounded-lg object-cover"
                         />
                         <div>
-                          <p className="font-bold text-gray-850 dark:text-gray-250 leading-none">{item.name}</p>
-                          <p className="text-[10px] text-gray-450 mt-1">{item.email}</p>
+                          <p className="font-bold text-gray-855 dark:text-gray-250 leading-none">{item.name}</p>
+                          <p className="text-[10px] text-gray-455 mt-1">{item.email}</p>
                         </div>
                       </div>
-                    </td>
-                    <td className="p-4">
-                      <p className="font-semibold text-gray-700 dark:text-gray-300 truncate max-w-[200px]" title={item.college}>{item.college || 'N/A'}</p>
-                      {item.yearOfStudy && (
-                        <span className="text-[9px] text-gray-400 dark:text-gray-500 font-bold">Year {item.yearOfStudy}</span>
-                      )}
                     </td>
                     <td className="p-4 text-center font-bold text-secondary">{item.reputation} ⭐</td>
                     <td className="p-4 text-center font-semibold">{item.totalUploads}</td>

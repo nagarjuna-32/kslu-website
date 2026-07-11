@@ -35,9 +35,7 @@ const Login = () => {
         name: 'Karnataka Scholar',
         email: 'scholar@kslucircle.com',
         googleId: 'g_' + Math.round(Math.random() * 1e9),
-        avatar: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=scholar',
-        college: 'KSLU Law School, Hubballi',
-        yearOfStudy: 3
+        avatar: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=scholar'
       };
       await googleLogin(mockGoogleData);
       navigate('/');

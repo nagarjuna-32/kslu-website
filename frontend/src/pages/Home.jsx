@@ -351,7 +351,7 @@ const Home = () => {
                       />
                       <div>
                         <h4 className="text-xs font-black text-slate-800 dark:text-slate-200 line-clamp-1">{c.name}</h4>
-                        <p className="text-[9px] text-slate-450 dark:text-slate-550 truncate max-w-[130px]">{c.college || 'KSLU Student'}</p>
+                        <p className="text-[9px] text-slate-400 dark:text-slate-500 truncate max-w-[130px]">KSLU Student</p>
                       </div>
                     </div>
                     <span className="text-[9px] font-black text-royal dark:text-secondary tracking-wider bg-royal/5 dark:bg-secondary/5 border border-royal/10 dark:border-secondary/10 px-2 py-0.5 rounded">

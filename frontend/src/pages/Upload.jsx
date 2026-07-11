@@ -246,18 +246,7 @@ const Upload = () => {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('university')}</label>
-                <select
-                  {...register('university', { required: true })}
-                  className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
-                >
-                  <option value="KSLU">KSLU (Karnataka State Law University)</option>
-                  <option value="NLSIU">NLSIU (National Law School)</option>
-                  <option value="Christ">Christ University Law</option>
-                  <option value="Other">Other Law Institution</option>
-                </select>
-              </div>
+
 
               {/* Exam Year (only for Question Papers) */}
               {materialType === 'paper' && (

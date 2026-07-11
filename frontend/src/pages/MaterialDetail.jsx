@@ -281,7 +281,7 @@ const MaterialDetail = () => {
               />
               <div>
                 <h4 className="text-xs font-bold text-gray-900 dark:text-white">{material.uploadedBy?.name || 'Community Member'}</h4>
-                <p className="text-[10px] text-gray-450 dark:text-gray-500 mt-0.5 truncate max-w-[170px]">{material.uploadedBy?.college || 'Law College Student'}</p>
+                <p className="text-[10px] text-gray-450 dark:text-gray-500 mt-0.5 truncate max-w-[170px]">KSLU Student Member</p>
               </div>
             </div>
 
