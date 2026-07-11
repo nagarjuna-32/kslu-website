@@ -25,6 +25,7 @@ exports.getMaterials = async (req, res, next) => {
       semester, 
       university, 
       subjectCode, 
+      course,
       search, 
       sortBy, 
       page = 1, 
@@ -38,6 +39,7 @@ exports.getMaterials = async (req, res, next) => {
     if (semester) where.semester = parseInt(semester);
     if (university) where.university = university;
     if (subjectCode) where.subjectCode = subjectCode.toUpperCase();
+    if (course) where.course = course;
 
     // Text search (search in title, subjectName, subjectCode, tags)
     if (search) {
@@ -159,7 +161,7 @@ exports.uploadMaterial = async (req, res, next) => {
       return res.status(400).json({ success: false, error: 'Please upload a PDF file' });
     }
 
-    const { title, type, subjectCode, subjectName, semester, university, year, description, tags } = req.body;
+    const { title, type, subjectCode, subjectName, semester, university, course, year, description, tags } = req.body;
 
     const uploadResult = await uploadFile(req.file);
 
@@ -177,6 +179,7 @@ exports.uploadMaterial = async (req, res, next) => {
         subjectName,
         semester: parseInt(semester),
         university,
+        course: course || "3-Year LL.B",
         year: year ? parseInt(year) : null,
         description,
         tags: tagString,
