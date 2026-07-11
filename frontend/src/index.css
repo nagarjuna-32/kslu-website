@@ -11,6 +11,10 @@ html, body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+body {
+  @apply bg-light-bg text-light-text dark:bg-dark-bg dark:text-dark-text;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -35,13 +39,19 @@ html, body {
 
 /* Base custom styles */
 .gradient-text {
-  background: linear-gradient(135deg, #1a365d 0%, #c9a84c 100%);
+  background: linear-gradient(135deg, #0F172A 0%, #D4AF37 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .dark .gradient-text {
-  background: linear-gradient(135deg, #e8e8e8 0%, #c9a84c 100%);
+  background: linear-gradient(135deg, #F8FAFC 0%, #D4AF37 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
