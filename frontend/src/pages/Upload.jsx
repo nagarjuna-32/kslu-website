@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useLocation } from 'react-router-dom';
 import api from '../api/axios';
 import SEO from '../components/common/SEO';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import { useTranslation } from '../contexts/LanguageContext';
 import { 
   UploadCloud, FileText, Check, ShieldAlert, BookOpen, AlertTriangle 
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const Upload = () => {
+  const location = useLocation();
+  const { t } = useTranslation();
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -18,6 +22,7 @@ const Upload = () => {
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm({
     defaultValues: {
       type: 'note',
+      course: '3-Year LL.B',
       semester: '1',
       university: 'KSLU',
       year: new Date().getFullYear().toString()
@@ -25,6 +30,17 @@ const Upload = () => {
   });
 
   const materialType = watch('type');
+
+  // Pre-fill fields from URL query parameters (from subject pages)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const code = params.get('subjectCode');
+    const name = params.get('subjectName');
+    const courseParam = params.get('course');
+    if (code) setValue('subjectCode', code.toUpperCase());
+    if (name) setValue('subjectName', decodeURIComponent(name));
+    if (courseParam) setValue('course', decodeURIComponent(courseParam));
+  }, [location, setValue]);
 
   const fetchMyUploads = async () => {
     try {
@@ -72,6 +88,7 @@ const Upload = () => {
     formData.append('subjectName', data.subjectName || '');
     formData.append('semester', data.semester);
     formData.append('university', data.university);
+    formData.append('course', data.course);
     if (data.type === 'paper') {
       formData.append('year', data.year);
     }
@@ -94,6 +111,7 @@ const Upload = () => {
         toast.success('Resource uploaded successfully and sent for review!');
         reset({
           type: 'note',
+          course: '3-Year LL.B',
           semester: '1',
           university: 'KSLU',
           year: new Date().getFullYear().toString()
@@ -120,104 +138,119 @@ const Upload = () => {
       
       {/* Header */}
       <div>
-        <span className="text-xs font-bold text-secondary uppercase tracking-widest">Share Resources</span>
-        <h1 className="text-3xl font-black text-gray-900 dark:text-white flex items-center gap-2 mt-0.5">
-          <UploadCloud className="w-8 h-8 text-primary dark:text-secondary" /> Upload study material
+        <span className="text-xs font-bold text-secondary uppercase tracking-widest">{t('shareResources')}</span>
+        <h1 className="text-3xl font-black text-slate-900 dark:text-white flex items-center gap-2 mt-0.5">
+          <UploadCloud className="w-8 h-8 text-royal dark:text-secondary" /> {t('uploadTitle')}
         </h1>
-        <p className="text-xs text-gray-550 dark:text-gray-400 mt-1.5">
-          Submit notes or old question papers. In development mode, files are automatically approved and searchable instantly.
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
+          {t('uploadSubtitle')}
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Form Panel (Col-span 2) */}
-        <div className="lg:col-span-2 bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
-          <h2 className="text-lg font-black text-gray-900 dark:text-white">Document Information</h2>
+        <div className="lg:col-span-2 bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+          <h2 className="text-lg font-black text-slate-900 dark:text-white">{t('docInfo')}</h2>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               
               {/* Type Toggle */}
               <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">Material Type</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('materialType')}</label>
                 <div className="flex gap-4">
                   <button 
                     type="button"
                     onClick={() => setValue('type', 'note')}
                     className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-colors ${
                       materialType === 'note' 
-                        ? 'bg-primary border-primary text-white dark:bg-secondary dark:border-secondary dark:text-primary' 
-                        : 'bg-white dark:bg-gray-850 border-gray-250 dark:border-gray-750 text-gray-700 dark:text-gray-300'
+                        ? 'bg-royal border-royal text-white dark:bg-secondary dark:border-secondary dark:text-primary' 
+                        : 'bg-white dark:bg-slate-850 border-slate-200 dark:border-slate-750 text-slate-700 dark:text-slate-300'
                     }`}
                   >
-                    📝 Study Note
+                    📝 {t('studyNoteToggle')}
                   </button>
                   <button 
                     type="button"
                     onClick={() => setValue('type', 'paper')}
                     className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-colors ${
                       materialType === 'paper' 
-                        ? 'bg-primary border-primary text-white dark:bg-secondary dark:border-secondary dark:text-primary' 
-                        : 'bg-white dark:bg-gray-855 border-gray-250 dark:border-gray-755 text-gray-700 dark:text-gray-300'
+                        ? 'bg-royal border-royal text-white dark:bg-secondary dark:border-secondary dark:text-primary' 
+                        : 'bg-white dark:bg-slate-855 border-slate-200 dark:border-slate-755 text-slate-700 dark:text-slate-300'
                     }`}
                   >
-                    📄 Question Paper
+                    📄 {t('questionPaperToggle')}
                   </button>
                 </div>
               </div>
 
               {/* Title */}
               <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">Document Title</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('docTitle')}</label>
                 <input
                   type="text"
                   placeholder="e.g. Contract Law Unit 1 Summary"
                   {...register('title', { required: 'Title is required' })}
-                  className="w-full bg-white dark:bg-gray-950 border border-gray-250 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-950 dark:text-white focus:outline-none focus:border-secondary"
+                  className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
                 />
                 {errors.title && <p className="text-xs text-red-500 mt-1 font-medium">{errors.title.message}</p>}
               </div>
 
+              {/* Course selection */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('lawCourse')}</label>
+                <select
+                  {...register('course', { required: true })}
+                  className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
+                >
+                  <option value="3-Year LL.B">3-Year LL.B</option>
+                  <option value="B.A. LL.B">B.A. LL.B</option>
+                  <option value="B.B.A. LL.B">B.B.A. LL.B</option>
+                  <option value="B.Com. LL.B">B.Com. LL.B</option>
+                  <option value="B.Sc. LL.B">B.Sc. LL.B</option>
+                </select>
+              </div>
+
               {/* Subject Code */}
               <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">Subject Code (e.g. KSLU-301)</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('subjectCode')}</label>
                 <input
                   type="text"
                   placeholder="KSLU-301"
                   {...register('subjectCode', { required: 'Subject Code is required' })}
-                  className="w-full bg-white dark:bg-gray-950 border border-gray-250 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-950 dark:text-white focus:outline-none focus:border-secondary uppercase"
+                  className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal uppercase"
                 />
                 {errors.subjectCode && <p className="text-xs text-red-500 mt-1 font-medium">{errors.subjectCode.message}</p>}
               </div>
 
               {/* Subject Name */}
               <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">Subject Name (Optional)</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('subjectName')}</label>
                 <input
                   type="text"
                   placeholder="e.g. Constitutional Law I"
                   {...register('subjectName')}
-                  className="w-full bg-white dark:bg-gray-950 border border-gray-250 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-950 dark:text-white focus:outline-none focus:border-secondary"
+                  className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
                 />
               </div>
 
               {/* Semester & University */}
               <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">Semester</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('semester')}</label>
                 <select
                   {...register('semester', { required: true })}
-                  className="w-full bg-white dark:bg-gray-955 border border-gray-250 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-955 dark:text-white focus:outline-none focus:border-secondary"
+                  className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
                 >
                   {Array.from({ length: 10 }, (_, i) => i + 1).map(sem => (
-                    <option key={sem} value={sem}>Semester {sem}</option>
+                    <option key={sem} value={sem}>{t('semester')} {sem}</option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">University</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('university')}</label>
                 <select
                   {...register('university', { required: true })}
-                  className="w-full bg-white dark:bg-gray-955 border border-gray-250 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-955 dark:text-white focus:outline-none focus:border-secondary"
+                  className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
                 >
                   <option value="KSLU">KSLU (Karnataka State Law University)</option>
                   <option value="NLSIU">NLSIU (National Law School)</option>
@@ -229,44 +262,44 @@ const Upload = () => {
               {/* Exam Year (only for Question Papers) */}
               {materialType === 'paper' && (
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">Exam Year</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('examYear')}</label>
                   <input
                     type="number"
                     placeholder="e.g. 2024"
                     {...register('year', { required: 'Exam Year is required', min: { value: 2000, message: 'Invalid Year' } })}
-                    className="w-full bg-white dark:bg-gray-955 border border-gray-250 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-950 dark:text-white focus:outline-none focus:border-secondary"
+                    className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
                   />
                 </div>
               )}
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">Description (Max 1000 chars)</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('description')}</label>
               <textarea
                 rows={3}
                 placeholder="Describe your notes or document context. Highlight specific topics covered..."
                 {...register('description')}
-                className="w-full bg-white dark:bg-gray-950 border border-gray-250 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-950 dark:text-white focus:outline-none focus:border-secondary"
+                className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">Keywords / Tags (comma-separated)</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('tags')}</label>
               <input
                 type="text"
                 placeholder="e.g. contracts, case laws, unit-1, syllabus"
                 {...register('tags')}
-                className="w-full bg-white dark:bg-gray-950 border border-gray-250 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-950 dark:text-white focus:outline-none focus:border-secondary"
+                className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
               />
             </div>
             
             {/* Terms checkbox */}
-            <div className="bg-amber-50/30 dark:bg-amber-950/10 border border-amber-100 dark:border-amber-900/30 rounded-2xl p-4 flex gap-3 text-xs leading-relaxed text-gray-650 dark:text-gray-400">
+            <div className="bg-amber-50/30 dark:bg-amber-955/10 border border-amber-100 dark:border-amber-900/30 rounded-2xl p-4 flex gap-3 text-xs leading-relaxed text-slate-655 dark:text-slate-400">
               <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="font-bold text-gray-850 dark:text-gray-250">Legal Ownership Declaration</p>
+                <p className="font-bold text-slate-850 dark:text-slate-200">{t('ownershipTitle')}</p>
                 <p className="mt-1 text-[10px]">
-                  By submitting, you confirm that you possess the rights to share this document and that it does not violate copyright rules.
+                  {t('ownershipText')}
                 </p>
               </div>
             </div>
@@ -274,13 +307,13 @@ const Upload = () => {
             {/* Upload progress indicator */}
             {loading && (
               <div className="space-y-2">
-                <div className="flex justify-between items-center text-xs font-bold text-gray-700 dark:text-gray-300">
+                <div className="flex justify-between items-center text-xs font-bold text-slate-700 dark:text-slate-300">
                   <span>Uploading PDF file...</span>
                   <span>{uploadProgress}%</span>
                 </div>
-                <div className="w-full bg-gray-100 dark:bg-gray-850 h-2 rounded-full overflow-hidden">
+                <div className="w-full bg-slate-100 dark:bg-slate-850 h-2 rounded-full overflow-hidden">
                   <div 
-                    className="bg-secondary h-full transition-all duration-100" 
+                    className="bg-royal h-full transition-all duration-100" 
                     style={{ width: `${uploadProgress}%` }}
                   />
                 </div>
@@ -292,17 +325,17 @@ const Upload = () => {
               disabled={loading}
               className="w-full bg-emerald-500 text-white py-3 rounded-xl text-xs font-bold hover:bg-emerald-600 transition-all shadow-md disabled:opacity-50 flex items-center justify-center gap-1.5"
             >
-              {loading ? 'Uploading File...' : 'Upload & Publish Note'}
+              {loading ? 'Uploading File...' : t('uploadBtn')}
             </button>
           </form>
         </div>
 
         {/* Sidebar / Upload Panel (Col-span 1) */}
         <div className="space-y-6">
-          <div className="bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-4">
-            <h2 className="text-lg font-black text-gray-900 dark:text-white">PDF Attachment</h2>
+          <div className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-4">
+            <h2 className="text-lg font-black text-slate-900 dark:text-white">{t('attachementTitle')}</h2>
             
-            <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-6 text-center bg-gray-50/50 dark:bg-gray-950/20 hover:bg-gray-50 dark:hover:bg-gray-950/40 transition-colors relative">
+            <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-6 text-center bg-slate-50/50 dark:bg-slate-950/20 hover:bg-slate-55 dark:hover:bg-slate-955/40 transition-colors relative">
               <input
                 type="file"
                 accept="application/pdf"
@@ -311,12 +344,12 @@ const Upload = () => {
                 disabled={loading}
               />
               <div className="flex flex-col items-center gap-3">
-                <UploadCloud className="w-10 h-10 text-gray-400" />
+                <UploadCloud className="w-10 h-10 text-slate-400" />
                 <div>
-                  <p className="text-xs font-bold text-gray-800 dark:text-gray-200">Drag & drop your PDF file here</p>
-                  <p className="text-[10px] text-gray-450 dark:text-gray-500 mt-1">or click to browse local files</p>
+                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{t('fileDragDrop')}</p>
+                  <p className="text-[10px] text-slate-455 dark:text-slate-500 mt-1">{t('fileClickBrowse')}</p>
                 </div>
-                <div className="text-[9px] text-gray-400 dark:text-gray-500 bg-white dark:bg-gray-850 px-2 py-0.5 rounded border border-gray-200 dark:border-gray-800">
+                <div className="text-[9px] text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-850 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-800">
                   PDF only • Max 20MB
                 </div>
               </div>
@@ -328,11 +361,11 @@ const Upload = () => {
                 <div className="flex items-center gap-3 min-w-0">
                   <FileText className="w-8 h-8 text-emerald-500 flex-shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-gray-855 dark:text-gray-250 truncate">{file.name}</p>
-                    <p className="text-[10px] text-gray-450 dark:text-gray-500 mt-0.5">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
+                    <p className="text-xs font-bold text-slate-855 dark:text-slate-250 truncate">{file.name}</p>
+                    <p className="text-[10px] text-slate-455 dark:text-slate-500 mt-0.5">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
                   </div>
                 </div>
-                <span className="bg-emerald-500 text-white text-[9px] font-bold px-2 py-0.5 rounded flex-shrink-0">Attached</span>
+                <span className="bg-emerald-500 text-white text-[9px] font-bold px-2 py-0.5 rounded flex-shrink-0">{t('attachementPreview')}</span>
               </div>
             )}
           </div>
@@ -341,39 +374,41 @@ const Upload = () => {
       
       {/* Uploads History List Table */}
       <div className="space-y-4">
-        <h3 className="text-lg font-black text-gray-900 dark:text-white">My Upload History</h3>
+        <h3 className="text-lg font-black text-slate-900 dark:text-white">{t('historyTitle')}</h3>
         
         {myUploadsLoading ? (
           <LoadingSpinner size="md" />
         ) : myUploads.length === 0 ? (
-          <div className="text-center py-10 bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800 rounded-3xl text-xs text-gray-500">
-            No document uploads logged yet.
+          <div className="text-center py-10 bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 rounded-3xl text-xs text-slate-500">
+            {t('historyEmpty')}
           </div>
         ) : (
-          <div className="bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800 rounded-3xl overflow-hidden shadow-sm">
+          <div className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-gray-50 dark:bg-gray-955/50 border-b border-gray-150 dark:border-gray-800 text-gray-500 dark:text-gray-400 font-bold uppercase">
-                    <th className="p-4">Title</th>
-                    <th className="p-4">Type</th>
-                    <th className="p-4">Code</th>
-                    <th className="p-4">Upload Date</th>
-                    <th className="p-4 text-center">Downloads</th>
-                    <th className="p-4 text-right">Status</th>
+                  <tr className="bg-slate-50 dark:bg-slate-955/50 border-b border-slate-150 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-bold uppercase">
+                    <th className="p-4">{t('tblTitle')}</th>
+                    <th className="p-4">{t('tblType')}</th>
+                    <th className="p-4">{t('tblCourse')}</th>
+                    <th className="p-4">{t('tblCode')}</th>
+                    <th className="p-4">{t('tblDate')}</th>
+                    <th className="p-4 text-center">{t('tblDownloads')}</th>
+                    <th className="p-4 text-right">{t('tblStatus')}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                   {myUploads.map(item => (
-                    <tr key={item._id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/10 transition-colors">
-                      <td className="p-4 font-bold text-gray-850 dark:text-gray-250 truncate max-w-xs">{item.title}</td>
+                    <tr key={item._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/10 transition-colors">
+                      <td className="p-4 font-bold text-slate-850 dark:text-slate-255 truncate max-w-xs">{item.title}</td>
                       <td className="p-4">
-                        <span className="uppercase text-[9px] font-bold px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-650 dark:text-gray-350">
+                        <span className="uppercase text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-650 dark:text-slate-350">
                           {item.type}
                         </span>
                       </td>
+                      <td className="p-4 text-slate-500 dark:text-slate-450 font-bold">{item.course || "3-Year LL.B"}</td>
                       <td className="p-4 font-semibold text-secondary uppercase">{item.subjectCode}</td>
-                      <td className="p-4 text-gray-500 dark:text-gray-400">
+                      <td className="p-4 text-slate-500 dark:text-slate-400">
                         {new Date(item.createdAt).toLocaleDateString()}
                       </td>
                       <td className="p-4 text-center font-semibold">{item.downloads}</td>
@@ -389,7 +424,7 @@ const Upload = () => {
                         </span>
                         {item.status === 'rejected' && item.rejectionReason && (
                           <span className="block text-[9px] text-red-500 dark:text-red-400 mt-1 max-w-[200px] truncate" title={item.rejectionReason}>
-                            Reason: {item.rejectionReason}
+                            {t('reasonRejected')}: {item.rejectionReason}
                           </span>
                         )}
                       </td>

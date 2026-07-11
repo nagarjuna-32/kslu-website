@@ -7,18 +7,22 @@ import MaterialCard from '../components/materials/MaterialCard';
 import MaterialFilters from '../components/materials/MaterialFilters';
 import MaterialSearch from '../components/materials/MaterialSearch';
 import SkeletonCard from '../components/common/SkeletonCard';
-import LoadingSpinner from '../components/common/LoadingSpinner';
-import { FileText, Inbox, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FileText, Inbox, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const Notes = () => {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
 
-  // Extract initial search from URL params if redirecting from home
+  // Extract initial search and type from URL params if redirecting
   const getInitialSearch = () => {
     const params = new URLSearchParams(location.search);
     return params.get('search') || '';
+  };
+
+  const getInitialType = () => {
+    const params = new URLSearchParams(location.search);
+    return params.get('type') || 'note';
   };
 
   const [materials, setMaterials] = useState([]);
@@ -28,13 +32,27 @@ const Notes = () => {
   const [pagination, setPagination] = useState({ total: 0, pages: 1 });
 
   const [filters, setFilters] = useState({
-    type: 'note',
+    type: getInitialType(),
+    course: '',
     semester: '',
     university: '',
     year: '',
     sortBy: 'newest',
     search: getInitialSearch()
   });
+
+  // Sync state with query parameters if they change externally (e.g. clicking header links)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const searchVal = params.get('search') || '';
+    const typeVal = params.get('type') || 'note';
+    setFilters(prev => ({
+      ...prev,
+      search: searchVal,
+      type: typeVal
+    }));
+    setPage(1);
+  }, [location]);
 
   const fetchBookmarks = async () => {
     if (isAuthenticated) {
@@ -44,7 +62,7 @@ const Notes = () => {
           setBookmarkedIds(new Set(response.data.bookmarks.map(b => b.material._id)));
         }
       } catch (err) {
-        console.error(err);
+        console.error('Failed to load bookmarks:', err);
       }
     }
   };
@@ -52,9 +70,10 @@ const Notes = () => {
   const fetchMaterials = async () => {
     setLoading(true);
     try {
-      const { semester, university, sortBy, search } = filters;
+      const { course, semester, university, sortBy, search } = filters;
       
       let queryParams = `?type=note&page=${page}&limit=9&sortBy=${sortBy}`;
+      if (course) queryParams += `&course=${encodeURIComponent(course)}`;
       if (semester) queryParams += `&semester=${semester}`;
       if (university) queryParams += `&university=${university}`;
       if (search) queryParams += `&search=${encodeURIComponent(search)}`;
@@ -94,7 +113,7 @@ const Notes = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 transition-colors duration-300">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 transition-colors duration-300">
       <SEO 
         title="KSLU Law Study Notes & Lecture Guides"
         description="Access free study notes, curriculum summaries, and legal digests uploaded by law students. Explore subject notes for constitutional law, family law, and more."
@@ -103,11 +122,11 @@ const Notes = () => {
       
       {/* Header */}
       <div>
-        <span className="text-xs font-bold text-secondary uppercase tracking-widest">Repository</span>
-        <h1 className="text-3xl font-black text-gray-900 dark:text-white flex items-center gap-2 mt-0.5">
-          <FileText className="w-8 h-8 text-primary dark:text-secondary" /> Study Notes
+        <span className="text-xs font-bold text-royal dark:text-secondary uppercase tracking-widest">Repository</span>
+        <h1 className="text-3xl font-black text-slate-900 dark:text-white flex items-center gap-2.5 mt-0.5">
+          <BookOpen className="w-8 h-8 text-royal dark:text-secondary" /> Study Notes
         </h1>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
           Explore legal lecture notes, summaries, and curriculum digests uploaded by classmates.
         </p>
       </div>
@@ -131,12 +150,12 @@ const Notes = () => {
               ))}
             </div>
           ) : materials.length === 0 ? (
-            <div className="text-center py-16 bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800 rounded-3xl space-y-4">
+            <div className="text-center py-16 bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 rounded-3xl space-y-4">
               <div className="flex justify-center">
-                <Inbox className="w-12 h-12 text-gray-300 dark:text-gray-700" />
+                <Inbox className="w-12 h-12 text-slate-350 dark:text-slate-700" />
               </div>
-              <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300">No notes found</h3>
-              <p className="text-xs text-gray-450 dark:text-gray-500 max-w-sm mx-auto leading-relaxed">
+              <h3 className="text-sm font-bold text-slate-750 dark:text-slate-300">No notes found</h3>
+              <p className="text-xs text-slate-450 dark:text-slate-500 max-w-sm mx-auto leading-relaxed">
                 Be the first to upload lecture notes or summaries for this selection.
               </p>
             </div>
@@ -159,17 +178,17 @@ const Notes = () => {
                   <button
                     disabled={page === 1}
                     onClick={() => setPage(p => Math.max(1, p - 1))}
-                    className="p-2 border border-gray-250 dark:border-gray-750 rounded-xl hover:border-secondary dark:text-gray-300 disabled:opacity-50"
+                    className="p-2.5 border border-slate-200 dark:border-slate-750 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 rounded-xl hover:border-royal dark:hover:border-secondary transition-all disabled:opacity-50"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
-                  <span className="text-xs font-bold text-gray-650 dark:text-gray-400">
+                  <span className="text-xs font-bold text-slate-650 dark:text-slate-400">
                     Page {page} of {pagination.pages}
                   </span>
                   <button
                     disabled={page === pagination.pages}
                     onClick={() => setPage(p => Math.min(pagination.pages, p + 1))}
-                    className="p-2 border border-gray-250 dark:border-gray-750 rounded-xl hover:border-secondary dark:text-gray-300 disabled:opacity-50"
+                    className="p-2.5 border border-slate-200 dark:border-slate-750 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 rounded-xl hover:border-royal dark:hover:border-secondary transition-all disabled:opacity-50"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>
