@@ -50,6 +50,7 @@ model StudyMaterial {
   semester        Int
   university      String       // "KSLU", "NLSIU", "Christ", "Other"
   course          String       @default("3-Year LL.B")
+  marks           Int          @default(80)
   year            Int?
   description     String?
   tags            String?      // Store comma-separated tags

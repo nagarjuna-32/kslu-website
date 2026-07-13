@@ -26,6 +26,7 @@ exports.getMaterials = async (req, res, next) => {
       university, 
       subjectCode, 
       course,
+      marks,
       search, 
       sortBy, 
       page = 1, 
@@ -40,6 +41,7 @@ exports.getMaterials = async (req, res, next) => {
     if (university) where.university = university;
     if (subjectCode) where.subjectCode = subjectCode.toUpperCase();
     if (course) where.course = course;
+    if (marks) where.marks = parseInt(marks);
 
     // Text search (search in title, subjectName, subjectCode, tags)
     if (search) {
@@ -161,7 +163,7 @@ exports.uploadMaterial = async (req, res, next) => {
       return res.status(400).json({ success: false, error: 'Please upload a PDF file' });
     }
 
-    const { title, type, subjectCode, subjectName, semester, university, course, year, description, tags } = req.body;
+    const { title, type, subjectCode, subjectName, semester, university, course, marks, year, description, tags } = req.body;
 
     const uploadResult = await uploadFile(req.file);
 
@@ -180,6 +182,7 @@ exports.uploadMaterial = async (req, res, next) => {
         semester: parseInt(semester),
         university,
         course: course || "3-Year LL.B",
+        marks: marks ? parseInt(marks) : 80,
         year: year ? parseInt(year) : null,
         description,
         tags: tagString,
@@ -232,7 +235,7 @@ exports.updateMaterial = async (req, res, next) => {
       return res.status(403).json({ success: false, error: 'Not authorized to update this material' });
     }
 
-    const { title, subjectCode, subjectName, semester, university, year, description, tags } = req.body;
+    const { title, subjectCode, subjectName, semester, university, marks, year, description, tags } = req.body;
 
     const dataToUpdate = {};
     if (title !== undefined) dataToUpdate.title = title;
@@ -240,6 +243,7 @@ exports.updateMaterial = async (req, res, next) => {
     if (subjectName !== undefined) dataToUpdate.subjectName = subjectName;
     if (semester !== undefined) dataToUpdate.semester = parseInt(semester);
     if (university !== undefined) dataToUpdate.university = university;
+    if (marks !== undefined) dataToUpdate.marks = parseInt(marks);
     if (year !== undefined) dataToUpdate.year = year ? parseInt(year) : null;
     if (description !== undefined) dataToUpdate.description = description;
     
