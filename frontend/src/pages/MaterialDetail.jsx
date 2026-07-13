@@ -222,6 +222,11 @@ const MaterialDetail = () => {
                     <Calendar className="w-3.5 h-3.5" /> Exam Year: {material.year}
                   </span>
                 )}
+                {material.marks && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">
+                    📚 Scheme: {material.marks} Marks
+                  </span>
+                )}
               </div>
             </div>
 

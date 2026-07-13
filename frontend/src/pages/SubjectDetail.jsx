@@ -27,6 +27,7 @@ const SubjectDetail = () => {
   const subject = semesterSubjects.find(s => s.code === subjectCode);
 
   const [activeTab, setActiveTab] = useState('notes'); // 'notes', 'pyqs', 'important', 'books', 'caselaws'
+  const [marksFilter, setMarksFilter] = useState(''); // '', '80', '100'
   const [materials, setMaterials] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -49,6 +50,10 @@ const SubjectDetail = () => {
         params.search = 'case law';
       }
 
+      if (marksFilter) {
+        params.marks = marksFilter;
+      }
+
       const response = await api.get('/materials', { params });
       if (response.data.success) {
         setMaterials(response.data.materials);
@@ -64,7 +69,7 @@ const SubjectDetail = () => {
     if (subjectCode) {
       fetchResources();
     }
-  }, [subjectCode, activeTab]);
+  }, [subjectCode, activeTab, marksFilter]);
 
   if (!course || !subject) {
     return (
@@ -126,7 +131,7 @@ const SubjectDetail = () => {
 
         <div>
           <Link
-            to={`/upload?subjectCode=${subject.code}&subjectName=${encodeURIComponent(subject.name)}&course=${encodeURIComponent(course.name)}`}
+            to={`/upload?subjectCode=${subject.code}&subjectName=${encodeURIComponent(subject.name)}&course=${encodeURIComponent(course.name)}${marksFilter ? `&marks=${marksFilter}` : ''}`}
             className="inline-flex items-center gap-2 bg-royal dark:bg-secondary text-white dark:text-primary px-5 py-3 rounded-2xl text-xs font-bold hover:scale-[1.02] active:scale-95 shadow transition-all"
           >
             <PlusCircle className="w-4 h-4" /> {t('upload')}
@@ -157,6 +162,33 @@ const SubjectDetail = () => {
         </div>
       </div>
 
+      {/* Marks Scheme Filters */}
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-50/60 dark:bg-slate-900/50 p-2 border border-slate-200 dark:border-slate-800/80 rounded-2xl">
+        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+          {[
+            { id: '', label: t('allSchemes') },
+            { id: '80', label: t('marksScheme80') },
+            { id: '100', label: t('marksScheme100') }
+          ].map(opt => (
+            <button
+              key={opt.id}
+              onClick={() => setMarksFilter(opt.id)}
+              className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+                marksFilter === opt.id
+                  ? 'bg-royal dark:bg-secondary text-white dark:text-primary shadow-sm'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-800/50'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        
+        <div className="text-[10px] text-slate-450 dark:text-slate-550 font-bold px-2.5 py-1 bg-slate-100 dark:bg-slate-800/40 rounded-lg">
+          {t('filterScheme')}
+        </div>
+      </div>
+
       {/* Resources content */}
       <div className="space-y-6">
         {loading ? (
@@ -176,7 +208,7 @@ const SubjectDetail = () => {
             </p>
             <div className="pt-2">
               <Link
-                to={`/upload?subjectCode=${subject.code}&subjectName=${encodeURIComponent(subject.name)}&course=${encodeURIComponent(course.name)}`}
+                to={`/upload?subjectCode=${subject.code}&subjectName=${encodeURIComponent(subject.name)}&course=${encodeURIComponent(course.name)}${marksFilter ? `&marks=${marksFilter}` : ''}`}
                 className="inline-flex items-center gap-1.5 border border-slate-200 dark:border-slate-800 text-slate-650 dark:text-slate-300 px-4 py-2.5 rounded-xl text-xs font-bold hover:border-royal dark:hover:border-secondary transition-all"
               >
                 {t('beFirstUpload')} <PlusCircle className="w-4.5 h-4.5 text-royal dark:text-secondary" />

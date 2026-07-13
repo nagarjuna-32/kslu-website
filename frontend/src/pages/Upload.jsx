@@ -25,6 +25,7 @@ const Upload = () => {
       course: '3-Year LL.B',
       semester: '1',
       university: 'KSLU',
+      marks: '80',
       year: new Date().getFullYear().toString()
     }
   });
@@ -89,6 +90,7 @@ const Upload = () => {
     formData.append('semester', data.semester);
     formData.append('university', data.university);
     formData.append('course', data.course);
+    formData.append('marks', data.marks || '80');
     if (data.type === 'paper') {
       formData.append('year', data.year);
     }
@@ -114,6 +116,7 @@ const Upload = () => {
           course: '3-Year LL.B',
           semester: '1',
           university: 'KSLU',
+          marks: '80',
           year: new Date().getFullYear().toString()
         });
         setFile(null);
@@ -243,6 +246,18 @@ const Upload = () => {
                   {Array.from({ length: 10 }, (_, i) => i + 1).map(sem => (
                     <option key={sem} value={sem}>{t('semester')} {sem}</option>
                   ))}
+                </select>
+              </div>
+
+              {/* Marks Scheme Selection */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('marks')} / Scheme</label>
+                <select
+                  {...register('marks', { required: true })}
+                  className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
+                >
+                  <option value="80">80 Marks Scheme</option>
+                  <option value="100">100 Marks Scheme</option>
                 </select>
               </div>
 

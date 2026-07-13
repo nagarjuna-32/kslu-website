@@ -105,6 +105,10 @@ const translations = {
     importantQsTab: 'Important Qs',
     refBooksTab: 'Reference Books',
     caseLawsTab: 'Case Laws',
+    allSchemes: 'All Schemes',
+    marksScheme80: '80 Marks Scheme',
+    marksScheme100: '100 Marks Scheme',
+    filterScheme: 'Filter by marks scheme',
     
     // Profile / Dashboard
     accountDashboard: 'Account Dashboard',
@@ -251,6 +255,10 @@ const translations = {
     importantQsTab: 'ಪ್ರಮುಖ ಪ್ರಶ್ನೆಗಳು',
     refBooksTab: 'ಉಲ್ಲೇಖಿತ ಪುಸ್ತಕಗಳು',
     caseLawsTab: 'ಪ್ರಮುಖ ಪ್ರಕರಣಗಳು',
+    allSchemes: 'ಎಲ್ಲಾ ಯೋಜನೆಗಳು',
+    marksScheme80: '೮೦ ಅಂಕಗಳ ಯೋಜನೆ',
+    marksScheme100: '೧೦0 ಅಂಕಗಳ ಯೋಜನೆ',
+    filterScheme: 'ಅಂಕಗಳ ಯೋಜನೆಯ ಮೂಲಕ ಫಿಲ್ಟರ್ ಮಾಡಿ',
     
     // Profile / Dashboard
     accountDashboard: 'ಖಾತೆ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್',

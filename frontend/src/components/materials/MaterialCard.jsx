@@ -145,12 +145,19 @@ const MaterialCard = ({ material, initialBookmarked = false, onBookmarkToggle = 
           </p>
         )}
 
-        {/* Year tag for papers */}
-        {material.type === 'paper' && material.year && (
-          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md mb-4">
-            <Calendar className="w-3 h-3" /> Year: {material.year}
-          </span>
-        )}
+        {/* Year & Marks badges */}
+        <div className="flex flex-wrap gap-1.5 mb-4">
+          {material.type === 'paper' && material.year && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">
+              <Calendar className="w-3 h-3" /> Year: {material.year}
+            </span>
+          )}
+          {material.marks && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">
+              📚 {material.marks} Marks
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Footer Info */}
