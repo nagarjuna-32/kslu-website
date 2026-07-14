@@ -11,7 +11,7 @@ import { COURSES } from '../utils/coursesData';
 import { motion } from 'framer-motion';
 import { 
   FileText, Award, Download, Users, ChevronRight, BookOpen, 
-  AlertCircle, Scale, GraduationCap, Compass, Landmark 
+  AlertCircle, Scale, GraduationCap, Compass, Landmark, Layers 
 } from 'lucide-react';
 
 const Home = () => {
@@ -192,16 +192,17 @@ const Home = () => {
       {isAuthenticated && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {statsLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {Array.from({ length: 4 }).map((_, i) => (
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+              {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="h-20 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-2xl" />
               ))}
             </div>
           ) : stats ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
               {[
                 { id: 'notes', label: t('studyNotes'), value: stats.totalNotes, icon: <FileText className="w-5 h-5 text-slate-800 dark:text-slate-200" />, bg: 'bg-slate-100 dark:bg-slate-800' },
                 { id: 'papers', label: t('papers'), value: stats.totalPapers, icon: <BookOpen className="w-5 h-5 text-amber-600 dark:text-secondary" />, bg: 'bg-amber-50 dark:bg-secondary/10' },
+                { id: 'syllabus', label: 'Syllabus', value: stats.totalSyllabus || 0, icon: <Layers className="w-5 h-5 text-indigo-650 dark:text-indigo-400" />, bg: 'bg-indigo-50 dark:bg-indigo-950/20' },
                 { id: 'downloads', label: t('totalDownloads'), value: stats.totalDownloads, icon: <Download className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />, bg: 'bg-emerald-50 dark:bg-emerald-950/20' },
                 { id: 'users', label: t('activeStudents'), value: stats.totalUsers, icon: <Users className="w-5 h-5 text-amber-600 dark:text-amber-500" />, bg: 'bg-amber-50 dark:bg-amber-950/20' },
               ].map((card) => (

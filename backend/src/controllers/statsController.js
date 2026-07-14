@@ -6,7 +6,15 @@ const { prisma } = require('../config/database');
 exports.getPublicStats = async (req, res, next) => {
   try {
     const totalNotes = await prisma.studyMaterial.count({
-      where: { status: 'approved', type: 'note' }
+      where: { 
+        status: 'approved', 
+        type: 'note',
+        NOT: { subjectCode: 'SYLLABUS' }
+      }
+    });
+
+    const totalSyllabus = await prisma.studyMaterial.count({
+      where: { status: 'approved', subjectCode: 'SYLLABUS' }
     });
     
     const totalPapers = await prisma.studyMaterial.count({
@@ -41,6 +49,7 @@ exports.getPublicStats = async (req, res, next) => {
       stats: {
         totalNotes,
         totalPapers,
+        totalSyllabus,
         totalUsers,
         totalDownloads
       },
