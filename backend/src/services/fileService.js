@@ -35,8 +35,9 @@ const uploadFile = async (file) => {
 
   if (isCloudinaryConfigured) {
     try {
+      const isPdf = file.mimetype === 'application/pdf' || file.originalname?.toLowerCase().endsWith('.pdf');
       const result = await cloudinary.uploader.upload(file.path, {
-        resource_type: 'auto',
+        resource_type: isPdf ? 'raw' : 'auto',
         folder: 'kslu_circle'
       });
       
