@@ -113,11 +113,17 @@ exports.register = async (req, res, next) => {
       }
     });
 
-    // Send emails
+    // Send emails in the background without blocking the response
     const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
     const verifyUrl = `${clientUrl}/verify-email/${verificationToken}`;
-    await emailService.sendVerificationEmail(user, verifyUrl);
-    await emailService.sendWelcomeEmail(user, `${clientUrl}/login`);
+    
+    emailService.sendVerificationEmail(user, verifyUrl).catch(err => {
+      logger.error(`Error sending verification email: ${err.message}`);
+    });
+    
+    emailService.sendWelcomeEmail(user, `${clientUrl}/login`).catch(err => {
+      logger.error(`Error sending welcome email: ${err.message}`);
+    });
 
     await sendTokenResponse(user, 201, req, res, 'register');
   } catch (error) {
@@ -245,11 +251,9 @@ exports.googleLogin = async (req, res, next) => {
       });
       
       const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-      try {
-        await emailService.sendWelcomeEmail(user, `${clientUrl}/login`);
-      } catch (emailErr) {
+      emailService.sendWelcomeEmail(user, `${clientUrl}/login`).catch(emailErr => {
         logger.error(`Error sending welcome email: ${emailErr.message}`);
-      }
+      });
     }
 
     await sendTokenResponse(user, 200, req, res, 'login');
