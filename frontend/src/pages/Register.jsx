@@ -42,7 +42,7 @@ const Register = () => {
         avatar: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=scholar'
       };
       await googleLogin(mockGoogleData);
-      navigate('/');
+      window.location.href = '/';
     } catch (err) {
       toast.error('Google registration failed');
     } finally {
@@ -76,7 +76,7 @@ const Register = () => {
               await googleLogin({ 
                 token: tokenResponse.access_token
               });
-              navigate('/');
+              window.location.href = '/';
             } catch (err) {
               // Error is already shown in toast by AuthContext
             } finally {
