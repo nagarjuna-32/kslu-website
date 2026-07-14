@@ -50,4 +50,45 @@ const protect = async (req, res, next) => {
   }
 };
 
-module.exports = { protect };
+const optionalProtect = async (req, res, next) => {
+  let token;
+
+  // Check headers
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1];
+  } 
+  // Check cookie
+  else if (req.headers.cookie) {
+    const cookies = req.headers.cookie.split(';').reduce((acc, cookie) => {
+      const parts = cookie.trim().split('=');
+      if (parts.length >= 2) {
+        const key = parts[0];
+        const value = parts.slice(1).join('=');
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
+    token = cookies.token;
+  }
+
+  if (!token) {
+    return next();
+  }
+
+  try {
+    const decoded = jwt.verify(
+      token, 
+      process.env.JWT_SECRET || 'kslu_circle_super_secret_key_change_me_in_production'
+    );
+    
+    req.user = await prisma.user.findUnique({
+      where: { id: decoded.id }
+    });
+    
+    next();
+  } catch (err) {
+    next();
+  }
+};
+
+module.exports = { protect, optionalProtect };

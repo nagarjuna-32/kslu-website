@@ -21,7 +21,7 @@ const Upload = () => {
 
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm({
     defaultValues: {
-      type: 'note',
+      resourceType: 'note',
       course: '3-Year LL.B',
       semester: '1',
       university: 'KSLU',
@@ -30,7 +30,7 @@ const Upload = () => {
     }
   });
 
-  const materialType = watch('type');
+  const resourceType = watch('resourceType');
 
   // Pre-fill fields from URL query parameters (from subject pages)
   useEffect(() => {
@@ -82,20 +82,44 @@ const Upload = () => {
     }
 
     setLoading(true);
+
+    let dbType = 'note';
+    let extraTags = [];
+    if (data.resourceType === 'pyq') {
+      dbType = 'paper';
+    } else if (data.resourceType === 'syllabus') {
+      dbType = 'note';
+      extraTags.push('syllabus');
+    } else if (data.resourceType === 'important') {
+      dbType = 'note';
+      extraTags.push('important');
+    }
+
+    let finalTags = data.tags || '';
+    if (extraTags.length > 0) {
+      finalTags = finalTags ? `${finalTags}, ${extraTags.join(', ')}` : extraTags.join(', ');
+    }
+
+    const generatedSubjectCode = data.subjectCode || (data.subjectName || "KSLU").slice(0, 10).toUpperCase();
+
     const formData = new FormData();
     formData.append('title', data.title);
-    formData.append('type', data.type);
-    formData.append('subjectCode', data.subjectCode.toUpperCase());
+    formData.append('type', dbType);
+    formData.append('subjectCode', generatedSubjectCode);
     formData.append('subjectName', data.subjectName || '');
     formData.append('semester', data.semester);
-    formData.append('university', data.university);
+    formData.append('university', 'KSLU');
     formData.append('course', data.course);
-    formData.append('marks', data.marks || '80');
-    if (data.type === 'paper') {
+
+    if (data.resourceType === 'pyq') {
+      formData.append('marks', data.marks || '80');
       formData.append('year', data.year);
+    } else {
+      formData.append('marks', '80');
     }
+
     formData.append('description', data.description || '');
-    formData.append('tags', data.tags || '');
+    formData.append('tags', finalTags);
     formData.append('file', file);
 
     try {
@@ -112,7 +136,7 @@ const Upload = () => {
       if (response.data.success) {
         toast.success('Resource uploaded successfully and sent for review!');
         reset({
-          type: 'note',
+          resourceType: 'note',
           course: '3-Year LL.B',
           semester: '1',
           university: 'KSLU',
@@ -157,50 +181,9 @@ const Upload = () => {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               
-              {/* Type Toggle */}
+              {/* Course Selection */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('materialType')}</label>
-                <div className="flex gap-4">
-                  <button 
-                    type="button"
-                    onClick={() => setValue('type', 'note')}
-                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-colors ${
-                      materialType === 'note' 
-                        ? 'bg-royal border-royal text-white dark:bg-secondary dark:border-secondary dark:text-primary' 
-                        : 'bg-white dark:bg-slate-850 border-slate-200 dark:border-slate-750 text-slate-700 dark:text-slate-300'
-                    }`}
-                  >
-                    📝 {t('studyNoteToggle')}
-                  </button>
-                  <button 
-                    type="button"
-                    onClick={() => setValue('type', 'paper')}
-                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-colors ${
-                      materialType === 'paper' 
-                        ? 'bg-royal border-royal text-white dark:bg-secondary dark:border-secondary dark:text-primary' 
-                        : 'bg-white dark:bg-slate-855 border-slate-200 dark:border-slate-755 text-slate-700 dark:text-slate-300'
-                    }`}
-                  >
-                    📄 {t('questionPaperToggle')}
-                  </button>
-                </div>
-              </div>
-
-              {/* Title */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('docTitle')}</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Contract Law Unit 1 Summary"
-                  {...register('title', { required: 'Title is required' })}
-                  className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
-                />
-                {errors.title && <p className="text-xs text-red-500 mt-1 font-medium">{errors.title.message}</p>}
-              </div>
-
-              {/* Course selection */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('lawCourse')}</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('lawCourse')} *</label>
                 <select
                   {...register('course', { required: true })}
                   className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
@@ -213,32 +196,9 @@ const Upload = () => {
                 </select>
               </div>
 
-              {/* Subject Code */}
+              {/* Semester */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('subjectCode')}</label>
-                <input
-                  type="text"
-                  placeholder="KSLU-301"
-                  {...register('subjectCode', { required: 'Subject Code is required' })}
-                  className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal uppercase"
-                />
-                {errors.subjectCode && <p className="text-xs text-red-500 mt-1 font-medium">{errors.subjectCode.message}</p>}
-              </div>
-
-              {/* Subject Name */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('subjectName')}</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Constitutional Law I"
-                  {...register('subjectName')}
-                  className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
-                />
-              </div>
-
-              {/* Semester & University */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('semester')}</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('semester')} *</label>
                 <select
                   {...register('semester', { required: true })}
                   className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
@@ -249,32 +209,71 @@ const Upload = () => {
                 </select>
               </div>
 
-              {/* Marks Scheme Selection */}
+              {/* Subject Name */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('marks')} / Scheme</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('subjectName')} *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Constitutional Law I"
+                  {...register('subjectName', { required: 'Subject Name is required' })}
+                  className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
+                />
+                {errors.subjectName && <p className="text-xs text-red-500 mt-1 font-medium">{errors.subjectName.message}</p>}
+              </div>
+
+              {/* Resource Type */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Resource Type *</label>
                 <select
-                  {...register('marks', { required: true })}
+                  {...register('resourceType', { required: true })}
                   className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
                 >
-                  <option value="80">80 Marks Scheme</option>
-                  <option value="100">100 Marks Scheme</option>
+                  <option value="note">Notes</option>
+                  <option value="pyq">PYQ</option>
+                  <option value="syllabus">Syllabus</option>
+                  <option value="important">Important Questions</option>
                 </select>
               </div>
 
+              {/* Only for PYQ: Marks and Exam Year */}
+              {resourceType === 'pyq' && (
+                <>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('marks')} / Scheme *</label>
+                    <select
+                      {...register('marks', { required: true })}
+                      className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
+                    >
+                      <option value="80">80 Marks Scheme</option>
+                      <option value="100">100 Marks Scheme</option>
+                    </select>
+                  </div>
 
-
-              {/* Exam Year (only for Question Papers) */}
-              {materialType === 'paper' && (
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('examYear')}</label>
-                  <input
-                    type="number"
-                    placeholder="e.g. 2024"
-                    {...register('year', { required: 'Exam Year is required', min: { value: 2000, message: 'Invalid Year' } })}
-                    className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
-                  />
-                </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('examYear')} *</label>
+                    <input
+                      type="number"
+                      placeholder="e.g. 2024"
+                      {...register('year', { required: 'Exam Year is required', min: { value: 2000, message: 'Invalid Year' } })}
+                      className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
+                    />
+                    {errors.year && <p className="text-xs text-red-500 mt-1 font-medium">{errors.year.message}</p>}
+                  </div>
+                </>
               )}
+
+              {/* Title */}
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('docTitle')} *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Contract Law Unit 1 Summary"
+                  {...register('title', { required: 'Title is required' })}
+                  className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
+                />
+                {errors.title && <p className="text-xs text-red-500 mt-1 font-medium">{errors.title.message}</p>}
+              </div>
+
             </div>
 
             <div>

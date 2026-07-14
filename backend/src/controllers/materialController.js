@@ -351,9 +351,11 @@ exports.downloadMaterial = async (req, res, next) => {
       data: { downloads: { increment: 1 } }
     });
 
+    const downloaderId = req.user ? req.user.id : null;
+
     await prisma.activityLog.create({
       data: {
-        userId: req.user.id,
+        userId: downloaderId,
         action: 'download',
         targetId: material.id,
         targetType: material.type,
@@ -362,14 +364,16 @@ exports.downloadMaterial = async (req, res, next) => {
       }
     });
 
-    // Increment downloads count for current user
-    await prisma.user.update({
-      where: { id: req.user.id },
-      data: { totalDownloads: { increment: 1 } }
-    });
+    if (downloaderId) {
+      // Increment downloads count for current user
+      await prisma.user.update({
+        where: { id: downloaderId },
+        data: { totalDownloads: { increment: 1 } }
+      });
+    }
 
     // Update uploader reputation & metrics
-    if (material.uploadedById !== req.user.id) {
+    if (!downloaderId || material.uploadedById !== downloaderId) {
       await prisma.user.update({
         where: { id: material.uploadedById },
         data: { reputation: { increment: 2 } }

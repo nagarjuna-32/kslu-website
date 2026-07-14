@@ -14,7 +14,7 @@ const {
   getPopularMaterials,
   getRecentMaterials
 } = require('../controllers/materialController');
-const { protect } = require('../middleware/auth');
+const { protect, optionalProtect } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const { validateMaterial } = require('../middleware/validation');
 
@@ -35,7 +35,7 @@ router.put('/:id', protect, updateMaterial);
 router.delete('/:id', protect, deleteMaterial);
 
 // Downloads & Ratings
-router.post('/:id/download', protect, downloadMaterial);
+router.post('/:id/download', optionalProtect, downloadMaterial);
 router.post('/:id/rate', protect, rateMaterial);
 
 module.exports = router;

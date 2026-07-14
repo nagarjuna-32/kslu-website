@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   FileText, Download, Eye, ThumbsUp, Bookmark, 
@@ -18,6 +18,54 @@ const MaterialCard = ({ material, initialBookmarked = false, onBookmarkToggle = 
     userVote: (material.upvotedBy || []).includes(user?._id) ? 'up' : (material.downvotedBy || []).includes(user?._id) ? 'down' : 'none'
   });
   const [downloadCount, setDownloadCount] = useState(material.downloads || 0);
+
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [downloadForm, setDownloadForm] = useState({
+    name: '',
+    email: '',
+    college: '',
+    purpose: 'Exam Preparation',
+    agree1: false,
+    agree2: false
+  });
+
+  useEffect(() => {
+    if (user) {
+      setDownloadForm(prev => ({
+        ...prev,
+        name: user.name || '',
+        email: user.email || ''
+      }));
+    }
+  }, [user]);
+
+  const triggerDownloadFile = async () => {
+    try {
+      await api.post(`/materials/${material._id}/download`);
+      setDownloadCount(prev => prev + 1);
+      window.open(material.fileUrl, '_blank');
+      toast.success('Starting file download...');
+    } catch (err) {
+      toast.error(err.message || 'Failed to download file');
+    }
+  };
+
+  const handleModalSubmit = async (e) => {
+    e.preventDefault();
+    if (!downloadForm.agree1 || !downloadForm.agree2) {
+      toast.error('Please accept the agreement terms');
+      return;
+    }
+    
+    localStorage.setItem('kslu_circle_download_profile', JSON.stringify({
+      name: downloadForm.name,
+      email: downloadForm.email,
+      college: downloadForm.college,
+      purpose: downloadForm.purpose
+    }));
+    setShowDownloadModal(false);
+    await triggerDownloadFile();
+  };
 
   const handleCardClick = () => {
     navigate(`/materials/${material._id}`);
@@ -71,21 +119,13 @@ const MaterialCard = ({ material, initialBookmarked = false, onBookmarkToggle = 
 
   const handleDownload = async (e) => {
     e.stopPropagation();
-    if (!isAuthenticated) {
-      toast.error('Please log in to download materials');
-      return navigate('/login');
-    }
-
-    try {
-      // Trigger download tally
-      await api.post(`/materials/${material._id}/download`);
-      setDownloadCount(prev => prev + 1);
-      
-      // Open the file link in new window to start download
-      window.open(material.fileUrl, '_blank');
-      toast.success('Starting file download...');
-    } catch (err) {
-      toast.error(err.message);
+    
+    // Check if profile exists in local storage
+    const storedProfile = localStorage.getItem('kslu_circle_download_profile');
+    if (storedProfile) {
+      await triggerDownloadFile();
+    } else {
+      setShowDownloadModal(true);
     }
   };
 
@@ -96,10 +136,11 @@ const MaterialCard = ({ material, initialBookmarked = false, onBookmarkToggle = 
   });
 
   return (
-    <div 
-      onClick={handleCardClick}
-      className="group cursor-pointer bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800/80 hover:border-slate-400 dark:hover:border-secondary rounded-2xl p-5 flex flex-col justify-between shadow-[0_2px_8px_-3px_rgba(0,0,0,0.08),0_1px_4px_-2px_rgba(0,0,0,0.04)] hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
-    >
+    <>
+      <div 
+        onClick={handleCardClick}
+        className="group cursor-pointer bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800/80 hover:border-slate-400 dark:hover:border-secondary rounded-2xl p-5 flex flex-col justify-between shadow-[0_2px_8px_-3px_rgba(0,0,0,0.08),0_1px_4px_-2px_rgba(0,0,0,0.04)] hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+      >
       <div>
         {/* Top Header Badge */}
         <div className="flex justify-between items-center mb-3">
@@ -207,7 +248,169 @@ const MaterialCard = ({ material, initialBookmarked = false, onBookmarkToggle = 
 
       </div>
 
-    </div>
+      </div>
+
+      {/* Download Resource Modal Gate */}
+      {showDownloadModal && (
+        <div 
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowDownloadModal(false);
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()} 
+            className="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl p-6 sm:p-8 space-y-6 overflow-y-auto max-h-[90vh] text-left"
+          >
+            {/* Modal Title */}
+            <div className="text-center space-y-1">
+              <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                Download Resource
+              </h3>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">
+                Please complete this verification step to download
+              </p>
+            </div>
+
+            {/* Document Details Block */}
+            <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-4 space-y-3 text-[11px] font-semibold">
+              <div className="flex items-start gap-2.5">
+                <span className="font-bold text-slate-400 dark:text-slate-500 w-24 flex-shrink-0">📄 Resource:</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200 line-clamp-2">{material.title}</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <span className="font-bold text-slate-400 dark:text-slate-500 w-24 flex-shrink-0">📚 Course:</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">{material.course || 'B.A. LL.B'}</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <span className="font-bold text-slate-400 dark:text-slate-500 w-24 flex-shrink-0">🎓 Semester:</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">Semester {material.semester}</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <span className="font-bold text-slate-400 dark:text-slate-500 w-24 flex-shrink-0">📖 Subject:</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">{material.subjectName || 'Constitutional Law'}</span>
+              </div>
+              {material.year && (
+                <div className="flex items-center gap-2.5">
+                  <span className="font-bold text-slate-400 dark:text-slate-500 w-24 flex-shrink-0">📅 Academic Year:</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">{material.year}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Form Fields */}
+            <form onSubmit={handleModalSubmit} className="space-y-4 text-xs font-semibold text-slate-700 dark:text-slate-300">
+              
+              {/* Name */}
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Name *</label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="Your Name"
+                  value={downloadForm.name}
+                  onChange={(e) => setDownloadForm(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-royal"
+                />
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Email (Optional)</label>
+                <input 
+                  type="email"
+                  placeholder="your.email@example.com"
+                  value={downloadForm.email}
+                  onChange={(e) => setDownloadForm(prev => ({ ...prev, email: e.target.value }))}
+                  className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-royal"
+                />
+              </div>
+
+              {/* College */}
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">College *</label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="e.g. Saraswathi Law College, Chitradurga"
+                  value={downloadForm.college}
+                  onChange={(e) => setDownloadForm(prev => ({ ...prev, college: e.target.value }))}
+                  className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-royal"
+                />
+              </div>
+
+              {/* Purpose Radio List */}
+              <div className="space-y-2">
+                <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Purpose</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {['Exam Preparation', 'Assignment', 'Research', 'Other'].map(opt => (
+                    <label key={opt} className="flex items-center gap-2 cursor-pointer p-2 bg-slate-50 dark:bg-slate-955 hover:bg-slate-100/55 dark:hover:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 rounded-xl transition-colors">
+                      <input 
+                        type="radio" 
+                        name="purpose"
+                        value={opt}
+                        checked={downloadForm.purpose === opt}
+                        onChange={(e) => setDownloadForm(prev => ({ ...prev, purpose: e.target.value }))}
+                        className="text-royal focus:ring-royal" 
+                      />
+                      <span className="text-[11px] text-slate-700 dark:text-slate-300 font-bold">{opt}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Agreements */}
+              <div className="space-y-3 pt-2">
+                <label className="flex items-start gap-2.5 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    required
+                    checked={downloadForm.agree1}
+                    onChange={(e) => setDownloadForm(prev => ({ ...prev, agree1: e.target.checked }))}
+                    className="mt-0.5 h-4 w-4 text-royal focus:ring-royal border-slate-350 dark:border-slate-750 rounded" 
+                  />
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-snug font-bold">
+                    I agree that these resources are shared by contributors.
+                  </span>
+                </label>
+
+                <label className="flex items-start gap-2.5 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    required
+                    checked={downloadForm.agree2}
+                    onChange={(e) => setDownloadForm(prev => ({ ...prev, agree2: e.target.checked }))}
+                    className="mt-0.5 h-4 w-4 text-royal focus:ring-royal border-slate-350 dark:border-slate-750 rounded" 
+                  />
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-snug font-bold">
+                    I understand KSLU Circle is an independent student platform.
+                  </span>
+                </label>
+              </div>
+
+              {/* Submit Buttons */}
+              <div className="flex gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowDownloadModal(false)}
+                  className="flex-1 py-2.5 border border-slate-200 dark:border-slate-850 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-xs font-bold text-slate-500 dark:text-slate-400 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 bg-royal dark:bg-secondary text-white dark:text-primary rounded-xl text-xs font-bold hover:scale-[1.01] active:scale-95 shadow transition-all"
+                >
+                  Download PDF
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
