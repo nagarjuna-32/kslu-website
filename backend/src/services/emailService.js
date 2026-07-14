@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const https = require('https');
 const logger = require('../utils/logger');
 
 let transporter;
@@ -24,9 +25,77 @@ if (isMailConfigured) {
   logger.info('Nodemailer SMTP settings missing. Emails will be logged to console.');
 }
 
+const postRequest = (url, headers, body) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const urlObj = new URL(url);
+      const options = {
+        hostname: urlObj.hostname,
+        port: 443,
+        path: urlObj.pathname,
+        method: 'POST',
+        headers: headers
+      };
+
+      const req = https.request(options, (res) => {
+        let data = '';
+        res.on('data', (chunk) => {
+          data += chunk;
+        });
+        res.on('end', () => {
+          resolve({
+            ok: res.statusCode >= 200 && res.statusCode < 300,
+            status: res.statusCode,
+            text: async () => data
+          });
+        });
+      });
+
+      req.on('error', (err) => {
+        reject(err);
+      });
+
+      req.write(JSON.stringify(body));
+      req.end();
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
 const sendEmail = async ({ to, subject, html }) => {
-  const fromEmail = process.env.FROM_EMAIL || process.env.EMAIL_FROM || 'noreply@kslucircle.com';
+  const resendApiKey = process.env.RESEND_API_KEY || 're_RNW4vahf_2VuCdT9MdJ4YWiksbxfYX1hB';
+  const fromEmail = process.env.FROM_EMAIL || process.env.EMAIL_FROM || 'onboarding@resend.dev';
   const fromName = process.env.FROM_NAME || 'KSLU Circle';
+
+  if (resendApiKey && resendApiKey !== 'your-resend-api-key') {
+    try {
+      const response = await postRequest(
+        'https://api.resend.com/emails',
+        {
+          'Authorization': `Bearer ${resendApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        {
+          from: `${fromName} <${fromEmail}>`,
+          to: to,
+          subject: subject,
+          html: html
+        }
+      );
+
+      if (response.ok) {
+        const text = await response.text();
+        logger.info(`Email sent via Resend to ${to}: ${subject} - Response: ${text}`);
+        return true;
+      } else {
+        const errText = await response.text();
+        logger.error(`Resend API failed: ${response.status} - ${errText}`);
+      }
+    } catch (error) {
+      logger.error(`Error sending Resend email to ${to}: ${error.message}`);
+    }
+  }
 
   if (isMailConfigured) {
     try {
@@ -37,7 +106,7 @@ const sendEmail = async ({ to, subject, html }) => {
         html
       };
       await transporter.sendMail(mailOptions);
-      logger.info(`Email sent to ${to}: ${subject}`);
+      logger.info(`Email sent via SMTP to ${to}: ${subject}`);
       return true;
     } catch (error) {
       logger.error(`Error sending email to ${to}: ${error.message}`);
