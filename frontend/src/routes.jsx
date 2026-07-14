@@ -16,6 +16,7 @@ import ResetPassword from './pages/ResetPassword';
 import Profile from './pages/Profile';
 import CourseDetail from './pages/CourseDetail';
 import SubjectDetail from './pages/SubjectDetail';
+import Syllabus from './pages/Syllabus';
 
 // Admin Components
 import AdminLayout from './components/admin/AdminLayout';
@@ -51,6 +52,7 @@ const AppRoutes = () => {
           <Route path="/" element={<Home />} />
           <Route path="/notes" element={<Notes />} />
           <Route path="/papers" element={<Papers />} />
+          <Route path="/syllabus" element={<Syllabus />} />
           <Route path="/materials/:id" element={<MaterialDetail />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />

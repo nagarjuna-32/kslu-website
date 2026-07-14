@@ -96,6 +96,12 @@ const Navbar = () => {
               {t('papers')}
             </Link>
             <Link 
+              to="/syllabus" 
+              className={`text-xs font-bold transition-colors ${isActive('/syllabus') ? 'text-royal dark:text-secondary font-black' : 'text-slate-600 dark:text-slate-350 hover:text-royal dark:hover:text-secondary'}`}
+            >
+              Syllabus
+            </Link>
+            <Link 
               to="/upload" 
               className={`text-xs font-bold transition-colors flex items-center gap-1.5 ${isActive('/upload') ? 'text-royal dark:text-secondary font-black' : 'text-slate-600 dark:text-slate-350 hover:text-royal dark:hover:text-secondary'}`}
             >
@@ -297,6 +303,13 @@ const Navbar = () => {
             className={`block px-3 py-2 rounded-lg text-sm font-medium ${isActive('/papers') ? 'bg-slate-100 dark:bg-slate-800 text-royal dark:text-secondary' : 'text-slate-700 dark:text-slate-300'}`}
           >
             {t('papers')}
+          </Link>
+          <Link 
+            to="/syllabus" 
+            onClick={() => setIsOpen(false)}
+            className={`block px-3 py-2 rounded-lg text-sm font-medium ${isActive('/syllabus') ? 'bg-slate-100 dark:bg-slate-800 text-royal dark:text-secondary' : 'text-slate-700 dark:text-slate-300'}`}
+          >
+            Syllabus
           </Link>
           <Link 
             to="/upload" 
