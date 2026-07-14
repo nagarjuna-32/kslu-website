@@ -2,7 +2,6 @@ import React from 'react';
 
 const MaterialFilters = ({ filters, setFilters, showYearFilter = false }) => {
   const semesters = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-  const universities = ['KSLU', 'NLSIU', 'Christ', 'Other'];
   const courses = ['3-Year LL.B', 'B.A. LL.B', 'B.B.A. LL.B', 'B.Com. LL.B', 'B.Sc. LL.B'];
   const sorts = [
     { value: 'newest', label: 'Newest Uploads' },
@@ -37,29 +36,6 @@ const MaterialFilters = ({ filters, setFilters, showYearFilter = false }) => {
                 }`}
               >
                 {course}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* University */}
-      <div>
-        <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider mb-3">University</h4>
-        <div className="flex flex-wrap gap-2">
-          {universities.map(uni => {
-            const isSelected = filters.university === uni;
-            return (
-              <button
-                key={uni}
-                onClick={() => handleSelect('university', uni)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
-                  isSelected
-                    ? 'bg-royal border-royal text-white dark:bg-secondary dark:border-secondary dark:text-primary shadow-sm'
-                    : 'bg-white dark:bg-slate-850 border-slate-200 dark:border-slate-750 text-slate-700 dark:text-slate-350 hover:border-royal dark:hover:border-secondary'
-                }`}
-              >
-                {uni}
               </button>
             );
           })}
