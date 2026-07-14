@@ -100,13 +100,14 @@ const Upload = () => {
       finalTags = finalTags ? `${finalTags}, ${extraTags.join(', ')}` : extraTags.join(', ');
     }
 
-    const generatedSubjectCode = data.subjectCode || (data.subjectName || "KSLU").slice(0, 10).toUpperCase();
+    const isSyllabus = data.resourceType === 'syllabus';
+    const generatedSubjectCode = isSyllabus ? 'SYLLABUS' : (data.subjectCode || (data.subjectName || "KSLU").slice(0, 10).toUpperCase());
 
     const formData = new FormData();
     formData.append('title', data.title);
     formData.append('type', dbType);
     formData.append('subjectCode', generatedSubjectCode);
-    formData.append('subjectName', data.subjectName || '');
+    formData.append('subjectName', isSyllabus ? 'Syllabus' : (data.subjectName || ''));
     formData.append('semester', data.semester);
     formData.append('university', 'KSLU');
     formData.append('course', data.course);
@@ -210,16 +211,18 @@ const Upload = () => {
               </div>
 
               {/* Subject Name */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('subjectName')} *</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Constitutional Law I"
-                  {...register('subjectName', { required: 'Subject Name is required' })}
-                  className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
-                />
-                {errors.subjectName && <p className="text-xs text-red-500 mt-1 font-medium">{errors.subjectName.message}</p>}
-              </div>
+              {resourceType !== 'syllabus' && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('subjectName')} *</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Constitutional Law I"
+                    {...register('subjectName', { required: resourceType !== 'syllabus' ? 'Subject Name is required' : false })}
+                    className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
+                  />
+                  {errors.subjectName && <p className="text-xs text-red-500 mt-1 font-medium">{errors.subjectName.message}</p>}
+                </div>
+              )}
 
               {/* Resource Type */}
               <div>

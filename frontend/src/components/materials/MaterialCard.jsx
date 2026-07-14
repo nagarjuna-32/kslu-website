@@ -18,6 +18,7 @@ const MaterialCard = ({ material, initialBookmarked = false, onBookmarkToggle = 
     userVote: (material.upvotedBy || []).includes(user?._id) ? 'up' : (material.downvotedBy || []).includes(user?._id) ? 'down' : 'none'
   });
   const [downloadCount, setDownloadCount] = useState(material.downloads || 0);
+  const isSyllabus = material.subjectCode === 'SYLLABUS' || material.subjectName === 'Syllabus' || material.tags?.toLowerCase().includes('syllabus') || material.title?.toLowerCase().includes('syllabus');
 
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [downloadForm, setDownloadForm] = useState({
@@ -180,7 +181,7 @@ const MaterialCard = ({ material, initialBookmarked = false, onBookmarkToggle = 
         </h3>
 
         {/* Subject Name */}
-        {material.subjectName && (
+        {material.subjectName && !isSyllabus && (
           <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium line-clamp-1 mb-4">
             {material.subjectName}
           </p>
@@ -287,10 +288,12 @@ const MaterialCard = ({ material, initialBookmarked = false, onBookmarkToggle = 
                 <span className="font-bold text-slate-400 dark:text-slate-500 w-24 flex-shrink-0">🎓 Semester:</span>
                 <span className="font-bold text-slate-800 dark:text-slate-200">Semester {material.semester}</span>
               </div>
-              <div className="flex items-center gap-2.5">
-                <span className="font-bold text-slate-400 dark:text-slate-500 w-24 flex-shrink-0">📖 Subject:</span>
-                <span className="font-bold text-slate-800 dark:text-slate-200">{material.subjectName || 'Constitutional Law'}</span>
-              </div>
+              {!isSyllabus && (
+                <div className="flex items-center gap-2.5">
+                  <span className="font-bold text-slate-400 dark:text-slate-550 w-24 flex-shrink-0">📖 Subject:</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">{material.subjectName || 'Constitutional Law'}</span>
+                </div>
+              )}
               {material.year && (
                 <div className="flex items-center gap-2.5">
                   <span className="font-bold text-slate-400 dark:text-slate-500 w-24 flex-shrink-0">📅 Academic Year:</span>

@@ -23,6 +23,7 @@ const MaterialDetail = () => {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [votes, setVotes] = useState({ upvotes: 0, downvotes: 0, userVote: 'none' });
   const [downloads, setDownloads] = useState(0);
+  const isSyllabus = material?.subjectCode === 'SYLLABUS' || material?.subjectName === 'Syllabus' || material?.tags?.toLowerCase().includes('syllabus') || material?.title?.toLowerCase().includes('syllabus');
 
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [downloadForm, setDownloadForm] = useState({
@@ -468,10 +469,12 @@ const MaterialDetail = () => {
                 <span className="font-bold text-slate-400 dark:text-slate-500 w-24 flex-shrink-0">🎓 Semester:</span>
                 <span className="font-bold text-slate-800 dark:text-slate-200">Semester {material.semester}</span>
               </div>
-              <div className="flex items-center gap-2.5">
-                <span className="font-bold text-slate-400 dark:text-slate-500 w-24 flex-shrink-0">📖 Subject:</span>
-                <span className="font-bold text-slate-800 dark:text-slate-200">{material.subjectName || 'Constitutional Law'}</span>
-              </div>
+              {!isSyllabus && (
+                <div className="flex items-center gap-2.5">
+                  <span className="font-bold text-slate-400 dark:text-slate-500 w-24 flex-shrink-0">📖 Subject:</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">{material.subjectName || 'Constitutional Law'}</span>
+                </div>
+              )}
               {material.year && (
                 <div className="flex items-center gap-2.5">
                   <span className="font-bold text-slate-400 dark:text-slate-500 w-24 flex-shrink-0">📅 Academic Year:</span>
