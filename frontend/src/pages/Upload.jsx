@@ -9,6 +9,7 @@ import {
   UploadCloud, FileText, Check, ShieldAlert, BookOpen, AlertTriangle 
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { SUBJECTS_MAP } from '../utils/coursesData';
 
 const Upload = () => {
   const location = useLocation();
@@ -26,11 +27,33 @@ const Upload = () => {
       semester: '1',
       university: 'KSLU',
       marks: '80',
-      year: new Date().getFullYear().toString()
+      year: new Date().getFullYear().toString(),
+      subjectCode: '',
+      subjectName: ''
     }
   });
 
   const resourceType = watch('resourceType');
+  const selectedCourse = watch('course');
+  const selectedSemester = watch('semester');
+  const watchedSubjectName = watch('subjectName');
+
+  const courseId = selectedCourse?.toLowerCase().replace(/\s+/g, '-').replace(/\./g, '');
+  const subjectsList = SUBJECTS_MAP[courseId]?.[selectedSemester] || [];
+
+  // Sync custom subject fields when course/semester/subject changes
+  useEffect(() => {
+    if (watchedSubjectName && watchedSubjectName !== 'Other') {
+      const exists = subjectsList.some(s => s.name === watchedSubjectName);
+      if (!exists && watchedSubjectName !== 'Syllabus') {
+        setValue('customSubjectName', watchedSubjectName);
+        const watchedCode = watch('subjectCode');
+        if (watchedCode) {
+          setValue('customSubjectCode', watchedCode);
+        }
+      }
+    }
+  }, [watchedSubjectName, selectedCourse, selectedSemester, subjectsList, setValue]);
 
   // Pre-fill fields from URL query parameters (from subject pages)
   useEffect(() => {
@@ -101,13 +124,21 @@ const Upload = () => {
     }
 
     const isSyllabus = data.resourceType === 'syllabus';
-    const generatedSubjectCode = isSyllabus ? 'SYLLABUS' : (data.subjectCode || (data.subjectName || "KSLU").slice(0, 10).toUpperCase());
+    let finalSubjectName = data.subjectName || '';
+    let finalSubjectCode = data.subjectCode || '';
+
+    if (data.subjectName === 'Other' || (!subjectsList.some(s => s.name === data.subjectName) && data.subjectName !== '')) {
+      finalSubjectName = data.customSubjectName || data.subjectName;
+      finalSubjectCode = data.customSubjectCode || (finalSubjectName || "KSLU").slice(0, 10).toUpperCase();
+    }
+
+    const generatedSubjectCode = isSyllabus ? 'SYLLABUS' : (finalSubjectCode || (finalSubjectName || "KSLU").slice(0, 10).toUpperCase());
 
     const formData = new FormData();
     formData.append('title', data.title);
     formData.append('type', dbType);
     formData.append('subjectCode', generatedSubjectCode);
-    formData.append('subjectName', isSyllabus ? 'Syllabus' : (data.subjectName || ''));
+    formData.append('subjectName', isSyllabus ? 'Syllabus' : finalSubjectName);
     formData.append('semester', data.semester);
     formData.append('university', 'KSLU');
     formData.append('course', data.course);
@@ -210,17 +241,63 @@ const Upload = () => {
                 </select>
               </div>
 
-              {/* Subject Name */}
+              {/* Subject Name Selection */}
               {resourceType !== 'syllabus' && (
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('subjectName')} *</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Constitutional Law I"
-                    {...register('subjectName', { required: resourceType !== 'syllabus' ? 'Subject Name is required' : false })}
-                    className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
-                  />
-                  {errors.subjectName && <p className="text-xs text-red-500 mt-1 font-medium">{errors.subjectName.message}</p>}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('subjectName')} *</label>
+                    <select
+                      value={subjectsList.some(s => s.name === watchedSubjectName) ? watchedSubjectName : (watchedSubjectName === '' ? '' : 'Other')}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'Other') {
+                          setValue('subjectName', 'Other');
+                          setValue('subjectCode', 'CUSTOM');
+                        } else {
+                          setValue('subjectName', val);
+                          const matchingSubject = subjectsList.find(s => s.name === val);
+                          if (matchingSubject) {
+                            setValue('subjectCode', matchingSubject.code);
+                          }
+                        }
+                      }}
+                      className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
+                    >
+                      <option value="">-- Select Subject --</option>
+                      {subjectsList.map(sub => (
+                        <option key={sub.code} value={sub.name}>
+                          {sub.name} ({sub.code})
+                        </option>
+                      ))}
+                      <option value="Other">Other / Custom Subject</option>
+                    </select>
+                    {errors.subjectName && <p className="text-xs text-red-500 mt-1 font-medium">{errors.subjectName.message}</p>}
+                  </div>
+
+                  {/* Custom Subject Fields */}
+                  {(watchedSubjectName === 'Other' || (!subjectsList.some(s => s.name === watchedSubjectName) && watchedSubjectName !== '' && watchedSubjectName !== undefined)) && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fadeIn">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Custom Subject Name *</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Special Law Paper"
+                          {...register('customSubjectName', { required: watchedSubjectName === 'Other' ? 'Custom Subject Name is required' : false })}
+                          className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
+                        />
+                        {errors.customSubjectName && <p className="text-xs text-red-500 mt-1 font-medium">{errors.customSubjectName.message}</p>}
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Custom Subject Code (Optional)</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. KSLU-SPEC"
+                          {...register('customSubjectCode')}
+                          className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
