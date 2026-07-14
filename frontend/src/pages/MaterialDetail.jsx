@@ -16,6 +16,8 @@ const MaterialDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
+  
+  const userId = user?.id || user?._id;
 
   const [material, setMaterial] = useState(null);
   const [similar, setSimilar] = useState([]);
@@ -47,7 +49,8 @@ const MaterialDetail = () => {
 
   const triggerDownloadFile = async () => {
     try {
-      await api.post(`/materials/${material._id}/download`);
+      const matId = material?.id || material?._id;
+      await api.post(`/materials/${matId}/download`);
       setDownloads(prev => prev + 1);
       window.open(material.fileUrl, '_blank');
       toast.success('Starting file download...');
@@ -79,19 +82,20 @@ const MaterialDetail = () => {
       const response = await api.get(`/materials/${id}`);
       if (response.data.success) {
         const mat = response.data.material;
+        const matId = mat.id || mat._id;
         setMaterial(mat);
         setDownloads(mat.downloads || 0);
         setVotes({
           upvotes: mat.upvotes || 0,
           downvotes: mat.downvotes || 0,
-          userVote: (mat.upvotedBy || []).includes(user?._id) ? 'up' : (mat.downvotedBy || []).includes(user?._id) ? 'down' : 'none'
+          userVote: (mat.upvotedBy || []).includes(userId) ? 'up' : (mat.downvotedBy || []).includes(userId) ? 'down' : 'none'
         });
 
         // Check if bookmarked
         if (isAuthenticated) {
           const bResponse = await api.get('/bookmarks');
           if (bResponse.data.success) {
-            const hasBookmark = bResponse.data.bookmarks.some(b => b.material._id === mat._id);
+            const hasBookmark = bResponse.data.bookmarks.some(b => (b.material.id || b.material._id) === matId);
             setIsBookmarked(hasBookmark);
           }
         }
@@ -99,7 +103,7 @@ const MaterialDetail = () => {
         // Fetch similar (based on subjectCode)
         const simResponse = await api.get(`/materials?subjectCode=${mat.subjectCode}`);
         if (simResponse.data.success) {
-          setSimilar(simResponse.data.materials.filter(m => m._id !== mat._id).slice(0, 3));
+          setSimilar(simResponse.data.materials.filter(m => (m.id || m._id) !== matId).slice(0, 3));
         }
       }
     } catch (err) {
@@ -119,13 +123,15 @@ const MaterialDetail = () => {
       return navigate('/login');
     }
 
+    const matId = material?.id || material?._id;
+
     try {
       if (isBookmarked) {
-        await api.delete(`/bookmarks/${material._id}`);
+        await api.delete(`/bookmarks/${matId}`);
         setIsBookmarked(false);
         toast.success('Removed bookmark');
       } else {
-        await api.post('/bookmarks', { materialId: material._id });
+        await api.post('/bookmarks', { materialId: matId });
         setIsBookmarked(true);
         toast.success('Bookmarked successfully');
       }
@@ -140,10 +146,11 @@ const MaterialDetail = () => {
       return navigate('/login');
     }
 
+    const matId = material?.id || material?._id;
     const nextVote = votes.userVote === direction ? 'none' : direction;
 
     try {
-      const response = await api.post(`/materials/${material._id}/rate`, { direction: nextVote });
+      const response = await api.post(`/materials/${matId}/rate`, { direction: nextVote });
       if (response.data.success) {
         setVotes({
           upvotes: response.data.upvotes,
@@ -422,7 +429,7 @@ const MaterialDetail = () => {
               <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">Related Files</h3>
               <div className="space-y-4">
                 {similar.map(mat => (
-                  <MaterialCard key={mat._id} material={mat} />
+                  <MaterialCard key={mat.id || mat._id} material={mat} />
                 ))}
               </div>
             </div>

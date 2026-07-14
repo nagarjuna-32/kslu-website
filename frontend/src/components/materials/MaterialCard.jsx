@@ -11,11 +11,14 @@ import toast from 'react-hot-toast';
 const MaterialCard = ({ material, initialBookmarked = false, onBookmarkToggle = null }) => {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
+  
+  const materialId = material.id || material._id;
+  const userId = user?.id || user?._id;
 
   const [isBookmarked, setIsBookmarked] = useState(initialBookmarked);
   const [votes, setVotes] = useState({
     upvotes: material.upvotes || 0,
-    userVote: (material.upvotedBy || []).includes(user?._id) ? 'up' : (material.downvotedBy || []).includes(user?._id) ? 'down' : 'none'
+    userVote: (material.upvotedBy || []).includes(userId) ? 'up' : (material.downvotedBy || []).includes(userId) ? 'down' : 'none'
   });
   const [downloadCount, setDownloadCount] = useState(material.downloads || 0);
   const isSyllabus = material.subjectCode === 'SYLLABUS' || material.subjectName === 'Syllabus' || material.tags?.toLowerCase().includes('syllabus') || material.title?.toLowerCase().includes('syllabus');
@@ -42,7 +45,7 @@ const MaterialCard = ({ material, initialBookmarked = false, onBookmarkToggle = 
 
   const triggerDownloadFile = async () => {
     try {
-      await api.post(`/materials/${material._id}/download`);
+      await api.post(`/materials/${materialId}/download`);
       setDownloadCount(prev => prev + 1);
       window.open(material.fileUrl, '_blank');
       toast.success('Starting file download...');
@@ -69,7 +72,7 @@ const MaterialCard = ({ material, initialBookmarked = false, onBookmarkToggle = 
   };
 
   const handleCardClick = () => {
-    navigate(`/materials/${material._id}`);
+    navigate(`/materials/${materialId}`);
   };
 
   const handleBookmark = async (e) => {
@@ -81,15 +84,15 @@ const MaterialCard = ({ material, initialBookmarked = false, onBookmarkToggle = 
 
     try {
       if (isBookmarked) {
-        await api.delete(`/bookmarks/${material._id}`);
+        await api.delete(`/bookmarks/${materialId}`);
         setIsBookmarked(false);
         toast.success('Removed from bookmarks');
       } else {
-        await api.post('/bookmarks', { materialId: material._id });
+        await api.post('/bookmarks', { materialId: materialId });
         setIsBookmarked(true);
         toast.success('Saved to bookmarks');
       }
-      if (onBookmarkToggle) onBookmarkToggle(material._id, !isBookmarked);
+      if (onBookmarkToggle) onBookmarkToggle(materialId, !isBookmarked);
     } catch (err) {
       toast.error(err.message);
     }
@@ -106,7 +109,7 @@ const MaterialCard = ({ material, initialBookmarked = false, onBookmarkToggle = 
     const nextVote = votes.userVote === direction ? 'none' : direction;
 
     try {
-      const response = await api.post(`/materials/${material._id}/rate`, { direction: nextVote });
+      const response = await api.post(`/materials/${materialId}/rate`, { direction: nextVote });
       if (response.data.success) {
         setVotes({
           upvotes: response.data.upvotes,
