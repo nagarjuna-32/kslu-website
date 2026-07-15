@@ -37,6 +37,8 @@ const Upload = () => {
   const selectedCourse = watch('course');
   const selectedSemester = watch('semester');
   const watchedSubjectName = watch('subjectName');
+  const watchedMarks = watch('marks');
+  const watchedYear = watch('year');
 
   const courseId = selectedCourse?.toLowerCase().replace(/\s+/g, '-').replace(/\./g, '');
   const subjectsList = SUBJECTS_MAP[courseId]?.[selectedSemester] || [];
@@ -54,6 +56,42 @@ const Upload = () => {
       }
     }
   }, [watchedSubjectName, selectedCourse, selectedSemester, subjectsList, setValue]);
+
+  // Auto-fill Title, Description and Tags when subject or resourceType changes
+  useEffect(() => {
+    if (!watchedSubjectName || watchedSubjectName === '' || watchedSubjectName === 'Other') return;
+
+    const subjectLabel = watchedSubjectName;
+    const semLabel = `Semester ${selectedSemester}`;
+    const year = watchedYear || new Date().getFullYear();
+    const marks = watchedMarks || '80';
+
+    let autoTitle = '';
+    let autoDesc = '';
+    let autoTags = '';
+
+    if (resourceType === 'pyq') {
+      autoTitle = `${subjectLabel} - PYQ ${year} (${marks} Marks)`;
+      autoDesc = `Previous Year Question Paper for ${subjectLabel} (${semLabel}) — ${marks} Marks Scheme, Exam Year ${year}. KSLU ${selectedCourse}.`;
+      autoTags = `pyq, ${subjectLabel.toLowerCase().replace(/[^a-z0-9]/g, '-')}, ${semLabel.toLowerCase().replace(' ', '-')}, ${year}, ${marks}-marks`;
+    } else if (resourceType === 'note') {
+      autoTitle = `${subjectLabel} - Study Notes`;
+      autoDesc = `Study notes and summaries for ${subjectLabel} (${semLabel}). KSLU ${selectedCourse}.`;
+      autoTags = `notes, ${subjectLabel.toLowerCase().replace(/[^a-z0-9]/g, '-')}, ${semLabel.toLowerCase().replace(' ', '-')}`;
+    } else if (resourceType === 'important') {
+      autoTitle = `${subjectLabel} - Important Questions`;
+      autoDesc = `Important questions and probable exam topics for ${subjectLabel} (${semLabel}). KSLU ${selectedCourse}.`;
+      autoTags = `important, questions, ${subjectLabel.toLowerCase().replace(/[^a-z0-9]/g, '-')}, ${semLabel.toLowerCase().replace(' ', '-')}`;
+    } else if (resourceType === 'syllabus') {
+      autoTitle = `${selectedCourse} ${semLabel} Syllabus`;
+      autoDesc = `Official KSLU Syllabus for ${selectedCourse} — ${semLabel}.`;
+      autoTags = `syllabus, ${selectedCourse.toLowerCase().replace(/[^a-z0-9]/g, '-')}, ${semLabel.toLowerCase().replace(' ', '-')}`;
+    }
+
+    if (autoTitle) setValue('title', autoTitle);
+    if (autoDesc) setValue('description', autoDesc);
+    if (autoTags) setValue('tags', autoTags);
+  }, [watchedSubjectName, resourceType, watchedYear, watchedMarks, selectedSemester, selectedCourse, setValue]);
 
   // Pre-fill fields from URL query parameters (from subject pages)
   useEffect(() => {
@@ -331,12 +369,15 @@ const Upload = () => {
 
                   <div>
                     <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('examYear')} *</label>
-                    <input
-                      type="number"
-                      placeholder="e.g. 2024"
-                      {...register('year', { required: 'Exam Year is required', min: { value: 2000, message: 'Invalid Year' } })}
+                    <select
+                      {...register('year', { required: 'Exam Year is required' })}
                       className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
-                    />
+                    >
+                      <option value="">-- Select Year --</option>
+                      {Array.from({ length: new Date().getFullYear() - 2014 }, (_, i) => new Date().getFullYear() - i).map(yr => (
+                        <option key={yr} value={yr}>{yr}</option>
+                      ))}
+                    </select>
                     {errors.year && <p className="text-xs text-red-500 mt-1 font-medium">{errors.year.message}</p>}
                   </div>
                 </>
@@ -344,7 +385,14 @@ const Upload = () => {
 
               {/* Title */}
               <div className="sm:col-span-2">
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('docTitle')} *</label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">{t('docTitle')} *</label>
+                  {watchedSubjectName && watchedSubjectName !== '' && watchedSubjectName !== 'Other' && (
+                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                      ✦ Auto-filled — edit if needed
+                    </span>
+                  )}
+                </div>
                 <input
                   type="text"
                   placeholder="e.g. Contract Law Unit 1 Summary"
@@ -357,7 +405,12 @@ const Upload = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('description')}</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">{t('description')}</label>
+                {watchedSubjectName && watchedSubjectName !== '' && watchedSubjectName !== 'Other' && (
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">✦ Auto-filled</span>
+                )}
+              </div>
               <textarea
                 rows={3}
                 placeholder="Describe your notes or document context. Highlight specific topics covered..."
@@ -367,7 +420,12 @@ const Upload = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('tags')}</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">{t('tags')}</label>
+                {watchedSubjectName && watchedSubjectName !== '' && watchedSubjectName !== 'Other' && (
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">✦ Auto-filled</span>
+                )}
+              </div>
               <input
                 type="text"
                 placeholder="e.g. contracts, case laws, unit-1, syllabus"
