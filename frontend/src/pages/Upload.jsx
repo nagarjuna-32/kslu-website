@@ -61,7 +61,8 @@ const Upload = () => {
   useEffect(() => {
     if (!watchedSubjectName || watchedSubjectName === '' || watchedSubjectName === 'Other') return;
 
-    const subjectLabel = watchedSubjectName;
+    const subjectLabel = String(watchedSubjectName);
+    const courseLabel = String(selectedCourse || '');
     const semLabel = `Semester ${selectedSemester}`;
     const year = watchedYear || new Date().getFullYear();
     const marks = watchedMarks || '80';
@@ -72,20 +73,20 @@ const Upload = () => {
 
     if (resourceType === 'pyq') {
       autoTitle = `${subjectLabel} - PYQ ${year} (${marks} Marks)`;
-      autoDesc = `Previous Year Question Paper for ${subjectLabel} (${semLabel}) — ${marks} Marks Scheme, Exam Year ${year}. KSLU ${selectedCourse}.`;
+      autoDesc = `Previous Year Question Paper for ${subjectLabel} (${semLabel}) — ${marks} Marks Scheme, Exam Year ${year}. KSLU ${courseLabel}.`;
       autoTags = `pyq, ${subjectLabel.toLowerCase().replace(/[^a-z0-9]/g, '-')}, ${semLabel.toLowerCase().replace(' ', '-')}, ${year}, ${marks}-marks`;
     } else if (resourceType === 'note') {
       autoTitle = `${subjectLabel} - Study Notes`;
-      autoDesc = `Study notes and summaries for ${subjectLabel} (${semLabel}). KSLU ${selectedCourse}.`;
+      autoDesc = `Study notes and summaries for ${subjectLabel} (${semLabel}). KSLU ${courseLabel}.`;
       autoTags = `notes, ${subjectLabel.toLowerCase().replace(/[^a-z0-9]/g, '-')}, ${semLabel.toLowerCase().replace(' ', '-')}`;
     } else if (resourceType === 'important') {
       autoTitle = `${subjectLabel} - Important Questions`;
-      autoDesc = `Important questions and probable exam topics for ${subjectLabel} (${semLabel}). KSLU ${selectedCourse}.`;
+      autoDesc = `Important questions and probable exam topics for ${subjectLabel} (${semLabel}). KSLU ${courseLabel}.`;
       autoTags = `important, questions, ${subjectLabel.toLowerCase().replace(/[^a-z0-9]/g, '-')}, ${semLabel.toLowerCase().replace(' ', '-')}`;
     } else if (resourceType === 'syllabus') {
-      autoTitle = `${selectedCourse} ${semLabel} Syllabus`;
-      autoDesc = `Official KSLU Syllabus for ${selectedCourse} — ${semLabel}.`;
-      autoTags = `syllabus, ${selectedCourse.toLowerCase().replace(/[^a-z0-9]/g, '-')}, ${semLabel.toLowerCase().replace(' ', '-')}`;
+      autoTitle = `${courseLabel} ${semLabel} Syllabus`;
+      autoDesc = `Official KSLU Syllabus for ${courseLabel} — ${semLabel}.`;
+      autoTags = `syllabus, ${courseLabel.toLowerCase().replace(/[^a-z0-9]/g, '-')}, ${semLabel.toLowerCase().replace(' ', '-')}`;
     }
 
     if (autoTitle) setValue('title', autoTitle);
