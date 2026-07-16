@@ -32,7 +32,13 @@ import AdminSettings from './pages/Admin/Settings';
 // Helper auth guard component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-light-bg dark:bg-dark-bg">
+        <div className="w-10 h-10 border-4 border-royal border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 };
 
