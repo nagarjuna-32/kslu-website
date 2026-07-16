@@ -16,6 +16,18 @@ const api = axios.create({
   }
 });
 
+// Attach stored JWT as Authorization header on every request (fallback when cookies are lost)
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('kslu_token');
+    if (token && !config.headers['Authorization']) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 // Global interceptor for standard error message extraction
 api.interceptors.response.use(
   (response) => response,
@@ -26,3 +38,4 @@ api.interceptors.response.use(
 );
 
 export default api;
+
