@@ -67,9 +67,19 @@ const uploadFile = async (file) => {
 };
 
 const deleteFile = async (publicId) => {
+  if (!publicId) return;
+
   if (isCloudinaryConfigured) {
     try {
-      await cloudinary.uploader.destroy(publicId);
+      // 1. Attempt deletion as raw resource (for PDFs/documents) first
+      const rawRes = await cloudinary.uploader.destroy(publicId, { resource_type: 'raw', invalidate: true });
+      logger.info(`Cloudinary raw destruction attempt for ${publicId}: ${JSON.stringify(rawRes)}`);
+
+      // 2. If raw destruction did not return 'ok', attempt image/auto destruction
+      if (!rawRes || rawRes.result !== 'ok') {
+        const imgRes = await cloudinary.uploader.destroy(publicId, { resource_type: 'image', invalidate: true });
+        logger.info(`Cloudinary image destruction attempt for ${publicId}: ${JSON.stringify(imgRes)}`);
+      }
     } catch (error) {
       logger.error(`Cloudinary deletion failed for ${publicId}: ${error.message}`);
     }
@@ -79,8 +89,9 @@ const deleteFile = async (publicId) => {
     if (fs.existsSync(filePath)) {
       try {
         fs.unlinkSync(filePath);
+        logger.info(`Local file deleted successfully: ${publicId}`);
       } catch (error) {
-        logger.error(`Local file deletion failed: ${error.message}`);
+        logger.error(`Local file deletion failed for ${publicId}: ${error.message}`);
       }
     }
   }

@@ -313,11 +313,23 @@ exports.deleteUser = async (req, res, next) => {
       return res.status(400).json({ success: false, error: 'Superadmin account cannot be deleted' });
     }
 
+    // Delete all files uploaded by this user from Cloudinary & local storage
+    const { deleteFile } = require('../services/fileService');
+    const userMaterials = await prisma.studyMaterial.findMany({
+      where: { uploadedById: user.id }
+    });
+
+    for (const mat of userMaterials) {
+      if (mat.filePublicId) {
+        await deleteFile(mat.filePublicId);
+      }
+    }
+
     await prisma.user.delete({ where: { id: user.id } });
 
     res.status(200).json({
       success: true,
-      message: 'User account and uploads deleted successfully'
+      message: 'User account and all uploaded files deleted successfully from database and Cloudinary'
     });
   } catch (error) {
     next(error);
@@ -545,15 +557,22 @@ exports.deleteMaterialAdmin = async (req, res, next) => {
       return res.status(404).json({ success: false, error: 'Material not found' });
     }
 
+    // Delete from Cloudinary / local storage
     const { deleteFile } = require('../services/fileService');
-    await deleteFile(material.filePublicId);
+    if (material.filePublicId) {
+      await deleteFile(material.filePublicId);
+    }
 
     // Decrement uploader's totalUploads (if approved)
-    if (material.status === 'approved') {
-      await prisma.user.update({
-        where: { id: material.uploadedById },
-        data: { totalUploads: { decrement: 1 } }
-      });
+    if (material.status === 'approved' && material.uploadedById) {
+      try {
+        await prisma.user.update({
+          where: { id: material.uploadedById },
+          data: { totalUploads: { decrement: 1 } }
+        });
+      } catch (err) {
+        logger.error(`Failed to update totalUploads count: ${err.message}`);
+      }
     }
 
     await prisma.studyMaterial.delete({
@@ -562,7 +581,7 @@ exports.deleteMaterialAdmin = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: 'Material deleted successfully by admin'
+      message: 'Material deleted successfully from database and Cloudinary'
     });
   } catch (error) {
     next(error);

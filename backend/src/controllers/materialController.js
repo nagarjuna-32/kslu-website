@@ -299,14 +299,20 @@ exports.deleteMaterial = async (req, res, next) => {
       return res.status(403).json({ success: false, error: 'Not authorized to delete this material' });
     }
 
-    await deleteFile(material.filePublicId);
+    if (material.filePublicId) {
+      await deleteFile(material.filePublicId);
+    }
 
     // Decrement uploader's totalUploads (if approved)
-    if (material.status === 'approved') {
-      await prisma.user.update({
-        where: { id: material.uploadedById },
-        data: { totalUploads: { decrement: 1 } }
-      });
+    if (material.status === 'approved' && material.uploadedById) {
+      try {
+        await prisma.user.update({
+          where: { id: material.uploadedById },
+          data: { totalUploads: { decrement: 1 } }
+        });
+      } catch (err) {
+        logger.error(`Failed to update totalUploads: ${err.message}`);
+      }
     }
 
     await prisma.studyMaterial.delete({
