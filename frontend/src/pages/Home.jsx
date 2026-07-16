@@ -338,21 +338,19 @@ const Home = () => {
                 <p className="text-xs text-slate-500 text-center py-4">Leaderboard currently empty.</p>
               ) : (
                 topContributors.map((c, idx) => (
-                  <div key={c._id} className="flex items-center justify-between gap-2 py-1">
+                  <div key={c._id || idx} className="flex items-center justify-between gap-2 py-1">
                     <div className="flex items-center gap-3">
                       <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black ${
                         idx === 0 ? 'bg-yellow-500 text-white animate-bounce' : idx === 1 ? 'bg-slate-300 text-slate-800' : idx === 2 ? 'bg-amber-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
                       }`}>
                         {idx + 1}
                       </span>
-                      <img 
-                        src={c.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${c.name}`} 
-                        alt={c.name}
-                        className="w-8 h-8 rounded-xl object-cover ring-1 ring-slate-100 dark:ring-slate-800"
-                      />
+                      <div className="w-8 h-8 rounded-xl bg-royal/10 dark:bg-secondary/10 flex items-center justify-center text-royal dark:text-secondary font-black text-xs">
+                        C{idx + 1}
+                      </div>
                       <div>
-                        <h4 className="text-xs font-black text-slate-800 dark:text-slate-200 line-clamp-1">{c.name}</h4>
-                        <p className="text-[9px] text-slate-400 dark:text-slate-500 truncate max-w-[130px]">KSLU Student</p>
+                        <h4 className="text-xs font-black text-slate-800 dark:text-slate-200 line-clamp-1">Contributor #{idx + 1}</h4>
+                        <p className="text-[9px] text-slate-400 dark:text-slate-500 truncate max-w-[130px]">KSLU Member</p>
                       </div>
                     </div>
                     <span className="text-[9px] font-black text-royal dark:text-secondary tracking-wider bg-royal/5 dark:bg-secondary/5 border border-royal/10 dark:border-secondary/10 px-2 py-0.5 rounded">

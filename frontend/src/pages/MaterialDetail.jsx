@@ -224,8 +224,8 @@ const MaterialDetail = () => {
             "url": "https://kslucircle.online"
           },
           "author": {
-            "@type": "Person",
-            "name": material.uploadedBy?.name || "KSLU Circle Contributor"
+            "@type": "Organization",
+            "name": "KSLU Circle"
           }
         }}
       />
@@ -273,7 +273,7 @@ const MaterialDetail = () => {
                     <Calendar className="w-3.5 h-3.5" /> Exam Year: {material.year}
                   </span>
                 )}
-                {material.marks && (
+                {(material.type === 'paper' || material.type === 'pyq' || material.resourceType === 'pyq') && material.marks && (
                   <span className="inline-flex items-center gap-1 text-[11px] font-bold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">
                     📚 Scheme: {material.marks} Marks
                   </span>
@@ -325,30 +325,17 @@ const MaterialDetail = () => {
         {/* Info Stats / Uploader Bar (Right Panel) */}
         <div className="space-y-6">
           
-          {/* Uploader Details Card */}
+          {/* Resource Details Card */}
           <div className="bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800 rounded-3xl p-6 space-y-5 shadow-sm">
-            <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider border-b border-gray-100 dark:border-gray-800 pb-3">Author Info</h3>
+            <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider border-b border-gray-100 dark:border-gray-800 pb-3">Resource Info</h3>
             
             <div className="flex items-center gap-3">
-              <img 
-                src={material.uploadedBy?.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${material.uploadedBy?.name || 'U'}`} 
-                alt={material.uploadedBy?.name}
-                className="w-10 h-10 rounded-xl object-cover ring-2 ring-secondary/20"
-              />
-              <div>
-                <h4 className="text-xs font-bold text-gray-900 dark:text-white">{material.uploadedBy?.name || 'Community Member'}</h4>
-                <p className="text-[10px] text-gray-450 dark:text-gray-500 mt-0.5 truncate max-w-[170px]">KSLU Student Member</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 bg-gray-50 dark:bg-gray-950/40 rounded-2xl p-4 text-center">
-              <div>
-                <p className="text-[10px] text-gray-450 uppercase font-semibold">Reputation</p>
-                <p className="text-sm font-black text-secondary mt-0.5">{material.uploadedBy?.reputation || 0} ⭐</p>
+              <div className="w-10 h-10 rounded-xl bg-royal/10 dark:bg-secondary/10 flex items-center justify-center text-royal dark:text-secondary text-lg">
+                📚
               </div>
               <div>
-                <p className="text-[10px] text-gray-450 uppercase font-semibold">Uploads</p>
-                <p className="text-sm font-black text-gray-900 dark:text-white mt-0.5">{material.uploadedBy?.totalUploads || 0}</p>
+                <h4 className="text-xs font-bold text-gray-900 dark:text-white">KSLU Repository</h4>
+                <p className="text-[10px] text-gray-450 dark:text-gray-500 mt-0.5 truncate max-w-[170px]">Peer Contributed Resource</p>
               </div>
             </div>
 
