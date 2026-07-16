@@ -13,8 +13,13 @@ export const AuthProvider = ({ children }) => {
       const response = await api.get('/auth/me');
       if (response.data.success) {
         setUser(response.data.user);
+      } else {
+        // Clear stale token
+        localStorage.removeItem('kslu_token');
+        setUser(null);
       }
     } catch (error) {
+      localStorage.removeItem('kslu_token');
       setUser(null);
     } finally {
       setLoading(false);
@@ -29,6 +34,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await api.post('/auth/login', { email, password });
       if (response.data.success) {
+        if (response.data.token) {
+          localStorage.setItem('kslu_token', response.data.token);
+        }
         setUser(response.data.user);
         toast.success(`Welcome back, ${response.data.user.name}!`);
         return response.data.user;
@@ -43,6 +51,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await api.post('/auth/register', userData);
       if (response.data.success) {
+        if (response.data.token) {
+          localStorage.setItem('kslu_token', response.data.token);
+        }
         setUser(response.data.user);
         toast.success('Registration successful! Verification email sent.');
         return response.data.user;
@@ -56,10 +67,12 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await api.post('/auth/logout');
+    } catch (error) {
+      // ignore errors, still clear session
+    } finally {
+      localStorage.removeItem('kslu_token');
       setUser(null);
       toast.success('Logged out successfully');
-    } catch (error) {
-      toast.error('Logout failed');
     }
   };
 
@@ -67,6 +80,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await api.post('/auth/google', googleData);
       if (response.data.success) {
+        if (response.data.token) {
+          localStorage.setItem('kslu_token', response.data.token);
+        }
         setUser(response.data.user);
         toast.success(`Welcome, ${response.data.user.name}!`);
         return response.data.user;
