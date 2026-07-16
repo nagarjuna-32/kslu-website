@@ -25,7 +25,8 @@ const MaterialDetail = () => {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [votes, setVotes] = useState({ upvotes: 0, downvotes: 0, userVote: 'none' });
   const [downloads, setDownloads] = useState(0);
-  const isSyllabus = material?.subjectCode === 'SYLLABUS' || material?.subjectName === 'Syllabus' || material?.tags?.toLowerCase().includes('syllabus') || material?.title?.toLowerCase().includes('syllabus');
+  const tagsStr = Array.isArray(material?.tags) ? material.tags.join(', ') : (material?.tags || '');
+  const isSyllabus = material?.subjectCode === 'SYLLABUS' || material?.subjectName === 'Syllabus' || tagsStr.toLowerCase().includes('syllabus') || material?.title?.toLowerCase().includes('syllabus');
 
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [downloadForm, setDownloadForm] = useState({
