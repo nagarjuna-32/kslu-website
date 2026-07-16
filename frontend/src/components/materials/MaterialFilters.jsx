@@ -65,31 +65,33 @@ const MaterialFilters = ({ filters, setFilters, showYearFilter = false }) => {
         </div>
       </div>
 
-      {/* Marks Scheme Filter */}
-      <div>
-        <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider mb-3">Marks Scheme</h4>
-        <div className="flex gap-2">
-          {[
-            { value: '80', label: '80 Marks' },
-            { value: '100', label: '100 Marks' }
-          ].map(opt => {
-            const isSelected = filters.marks === opt.value;
-            return (
-              <button
-                key={opt.value}
-                onClick={() => handleSelect('marks', opt.value)}
-                className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all text-center ${
-                  isSelected
-                    ? 'bg-royal border-royal text-white dark:bg-secondary dark:border-secondary dark:text-primary shadow-sm'
-                    : 'bg-white dark:bg-slate-850 border-slate-200 dark:border-slate-750 text-slate-750 dark:text-slate-350 hover:border-royal dark:hover:border-secondary'
-                }`}
-              >
-                {opt.label}
-              </button>
-            );
-          })}
+      {/* Marks Scheme Filter (only for Question Papers) */}
+      {(filters.type === 'pyq' || showYearFilter) && (
+        <div>
+          <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider mb-3">Marks Scheme</h4>
+          <div className="flex gap-2">
+            {[
+              { value: '80', label: '80 Marks' },
+              { value: '100', label: '100 Marks' }
+            ].map(opt => {
+              const isSelected = filters.marks === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  onClick={() => handleSelect('marks', opt.value)}
+                  className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all text-center ${
+                    isSelected
+                      ? 'bg-royal border-royal text-white dark:bg-secondary dark:border-secondary dark:text-primary shadow-sm'
+                      : 'bg-white dark:bg-slate-850 border-slate-200 dark:border-slate-750 text-slate-750 dark:text-slate-350 hover:border-royal dark:hover:border-secondary'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Year Filter (only for Papers) */}
       {showYearFilter && (

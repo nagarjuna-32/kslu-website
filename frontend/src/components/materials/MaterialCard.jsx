@@ -194,12 +194,12 @@ const MaterialCard = ({ material, initialBookmarked = false, onBookmarkToggle = 
 
         {/* Year & Marks badges */}
         <div className="flex flex-wrap gap-1.5 mb-4">
-          {material.type === 'paper' && material.year && (
+          {(material.type === 'paper' || material.type === 'pyq' || material.resourceType === 'pyq') && material.year && (
             <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">
               <Calendar className="w-3 h-3" /> Year: {material.year}
             </span>
           )}
-          {material.marks && (
+          {(material.type === 'paper' || material.type === 'pyq' || material.resourceType === 'pyq') && material.marks && (
             <span className="inline-flex items-center gap-1 text-[10px] font-bold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">
               📚 {material.marks} Marks
             </span>
@@ -210,16 +210,14 @@ const MaterialCard = ({ material, initialBookmarked = false, onBookmarkToggle = 
       {/* Footer Info */}
       <div className="border-t border-gray-100 dark:border-gray-800 pt-4 mt-4">
         
-        {/* User Card */}
+        {/* Repository Card */}
         <div className="flex items-center justify-between mb-3.5">
           <div className="flex items-center gap-2">
-            <img 
-              src={material.uploadedBy?.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${material.uploadedBy?.name || 'U'}`} 
-              alt={material.uploadedBy?.name}
-              className="w-6.5 h-6.5 rounded-lg object-cover ring-1 ring-gray-100 dark:ring-gray-800"
-            />
+            <div className="w-6.5 h-6.5 rounded-lg bg-royal/10 dark:bg-secondary/10 flex items-center justify-center text-royal dark:text-secondary text-[10px] font-black">
+              ⚖️
+            </div>
             <div className="text-[10px]">
-              <p className="font-bold text-gray-800 dark:text-gray-200 line-clamp-1">{material.uploadedBy?.name || 'Community Member'}</p>
+              <p className="font-bold text-gray-800 dark:text-gray-200 line-clamp-1">KSLU Repository</p>
               <p className="text-gray-450 dark:text-gray-500">{formattedDate}</p>
             </div>
           </div>
