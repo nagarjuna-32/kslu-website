@@ -11,7 +11,7 @@ const connectDB = async () => {
     logger.info('PostgreSQL connection established successfully via Prisma ORM.');
   } catch (error) {
     logger.error(`Database connection error: ${error.message}`);
-    process.exit(1);
+    logger.warn('Running in disconnected DB fallback mode. Please start PostgreSQL at localhost:5432 or update DATABASE_URL in backend/.env');
   }
 };
 

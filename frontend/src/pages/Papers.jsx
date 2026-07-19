@@ -68,6 +68,18 @@ const Papers = () => {
   };
 
   const fetchMaterials = async () => {
+    // If course and semester are not yet selected and user hasn't typed a search term, wait for user selection
+    if (!filters.course && !filters.search) {
+      setMaterials([]);
+      setLoading(false);
+      return;
+    }
+    if (filters.course && !filters.semester && !filters.search) {
+      setMaterials([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const { course, semester, university, year, sortBy, search } = filters;
@@ -149,6 +161,30 @@ const Papers = () => {
               {Array.from({ length: 6 }).map((_, i) => (
                 <SkeletonCard key={i} />
               ))}
+            </div>
+          ) : !filters.course && !filters.search ? (
+            <div className="text-center py-16 bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 rounded-3xl p-8 space-y-3 shadow-sm">
+              <div className="w-12 h-12 rounded-2xl bg-royal/10 dark:bg-secondary/10 text-royal dark:text-secondary flex items-center justify-center mx-auto text-xl font-bold">
+                🎓
+              </div>
+              <h3 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider">
+                Step 1: Select Your Law Course
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
+                Please select your program (3-Year LL.B, B.A. LL.B, B.B.A. LL.B, etc.) from the left filter panel to proceed.
+              </p>
+            </div>
+          ) : filters.course && !filters.semester && !filters.search ? (
+            <div className="text-center py-16 bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 rounded-3xl p-8 space-y-3 shadow-sm">
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto text-xl font-bold">
+                📄
+              </div>
+              <h3 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider">
+                Step 2: Select Your Semester
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
+                Select your semester (S1 - {filters.course.includes('3-Year') ? 'S6' : 'S10'}) from the left filter panel to reveal Marks Scheme, Paper Year & Question Papers.
+              </p>
             </div>
           ) : materials.length === 0 ? (
             <div className="text-center py-16 bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 rounded-3xl space-y-4">
