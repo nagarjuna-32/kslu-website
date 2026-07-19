@@ -82,6 +82,21 @@ body {
   border: 1px solid rgba(30, 41, 59, 0.8);
 }
 
+/* Enhanced Placeholder styles for crisp contrast in Dark Mode */
+input::placeholder,
+textarea::placeholder,
+select::placeholder {
+  color: #94a3b8 !important;
+  opacity: 1 !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder,
+.dark select::placeholder {
+  color: #64748b !important;
+  opacity: 1 !important;
+}
+
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);

@@ -52,7 +52,7 @@ const MaterialSearch = ({ onSearch, placeholder = 'Search by title, subject code
           }}
           onFocus={() => setShowSuggestions(true)}
           placeholder={placeholder}
-          className="w-full bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800 rounded-2xl pl-12 pr-11 py-3.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-secondary dark:focus:border-secondary transition-all shadow-sm focus:shadow-md"
+          className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl pl-12 pr-11 py-3.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-all shadow-sm focus:shadow-md"
         />
         {searchTerm && (
           <button 
