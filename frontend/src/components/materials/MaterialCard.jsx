@@ -317,7 +317,7 @@ const MaterialCard = ({ material, initialBookmarked = false, onBookmarkToggle = 
                   placeholder="Your Name"
                   value={downloadForm.name}
                   onChange={(e) => setDownloadForm(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-royal"
+                  className="w-full bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-750 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400"
                 />
               </div>
 
@@ -329,7 +329,7 @@ const MaterialCard = ({ material, initialBookmarked = false, onBookmarkToggle = 
                   placeholder="your.email@example.com"
                   value={downloadForm.email}
                   onChange={(e) => setDownloadForm(prev => ({ ...prev, email: e.target.value }))}
-                  className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-royal"
+                  className="w-full bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-750 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400"
                 />
               </div>
 
@@ -342,7 +342,7 @@ const MaterialCard = ({ material, initialBookmarked = false, onBookmarkToggle = 
                   placeholder="e.g. Saraswathi Law College, Chitradurga"
                   value={downloadForm.college}
                   onChange={(e) => setDownloadForm(prev => ({ ...prev, college: e.target.value }))}
-                  className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-royal"
+                  className="w-full bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-750 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400"
                 />
               </div>
 
@@ -351,16 +351,16 @@ const MaterialCard = ({ material, initialBookmarked = false, onBookmarkToggle = 
                 <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Purpose</label>
                 <div className="grid grid-cols-2 gap-2">
                   {['Exam Preparation', 'Assignment', 'Research', 'Other'].map(opt => (
-                    <label key={opt} className="flex items-center gap-2 cursor-pointer p-2 bg-slate-50 dark:bg-slate-955 hover:bg-slate-100/55 dark:hover:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 rounded-xl transition-colors">
+                    <label key={opt} className="flex items-center gap-2 cursor-pointer p-2 bg-slate-50 dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-750 rounded-xl transition-colors">
                       <input 
                         type="radio" 
                         name="purpose"
                         value={opt}
                         checked={downloadForm.purpose === opt}
                         onChange={(e) => setDownloadForm(prev => ({ ...prev, purpose: e.target.value }))}
-                        className="text-royal focus:ring-royal" 
+                        className="text-amber-500 focus:ring-amber-500" 
                       />
-                      <span className="text-[11px] text-slate-700 dark:text-slate-300 font-bold">{opt}</span>
+                      <span className="text-[11px] text-slate-700 dark:text-slate-200 font-bold">{opt}</span>
                     </label>
                   ))}
                 </div>
@@ -374,7 +374,7 @@ const MaterialCard = ({ material, initialBookmarked = false, onBookmarkToggle = 
                     required
                     checked={downloadForm.agree1}
                     onChange={(e) => setDownloadForm(prev => ({ ...prev, agree1: e.target.checked }))}
-                    className="mt-0.5 h-4 w-4 text-royal focus:ring-royal border-slate-350 dark:border-slate-750 rounded" 
+                    className="mt-0.5 h-4 w-4 text-amber-500 focus:ring-amber-500 border-slate-350 dark:border-slate-700 rounded" 
                   />
                   <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-snug font-bold">
                     I agree that these resources are shared by contributors.
@@ -387,7 +387,7 @@ const MaterialCard = ({ material, initialBookmarked = false, onBookmarkToggle = 
                     required
                     checked={downloadForm.agree2}
                     onChange={(e) => setDownloadForm(prev => ({ ...prev, agree2: e.target.checked }))}
-                    className="mt-0.5 h-4 w-4 text-royal focus:ring-royal border-slate-350 dark:border-slate-750 rounded" 
+                    className="mt-0.5 h-4 w-4 text-amber-500 focus:ring-amber-500 border-slate-350 dark:border-slate-700 rounded" 
                   />
                   <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-snug font-bold">
                     I understand KSLU Circle is an independent student platform.
@@ -400,13 +400,13 @@ const MaterialCard = ({ material, initialBookmarked = false, onBookmarkToggle = 
                 <button
                   type="button"
                   onClick={() => setShowDownloadModal(false)}
-                  className="flex-1 py-2.5 border border-slate-200 dark:border-slate-850 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-xs font-bold text-slate-500 dark:text-slate-400 transition-colors"
+                  className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-750 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 bg-royal dark:bg-secondary text-white dark:text-primary rounded-xl text-xs font-bold hover:scale-[1.01] active:scale-95 shadow transition-all"
+                  className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-amber-400 dark:hover:bg-amber-500 text-white dark:text-slate-950 font-black rounded-xl text-xs hover:scale-[1.01] active:scale-95 shadow transition-all"
                 >
                   Download PDF
                 </button>
