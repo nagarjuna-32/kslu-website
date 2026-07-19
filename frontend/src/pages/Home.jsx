@@ -93,80 +93,122 @@ const Home = () => {
       
       {/* Announcements Banner */}
       {announcements.length > 0 && (
-        <div className="bg-royal text-white py-3 px-4 text-xs font-bold text-center flex items-center justify-center gap-2 relative shadow-md">
-          <AlertCircle className="w-4 h-4 animate-pulse text-secondary" />
+        <div className="bg-gradient-to-r from-royal via-blue-900 to-indigo-900 text-white py-3 px-4 text-xs font-bold text-center flex items-center justify-center gap-2 relative shadow-lg">
+          <AlertCircle className="w-4 h-4 animate-pulse text-amber-400" />
           <span>ANNOUNCEMENT: {announcements[0].title} — {announcements[0].content}</span>
           {announcements[0].link && (
-            <a href={announcements[0].link} className="underline pl-1 text-secondary hover:text-white transition-colors">Learn More</a>
+            <a href={announcements[0].link} className="underline pl-1 text-amber-300 hover:text-white transition-colors">Learn More</a>
           )}
         </div>
       )}
 
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-white dark:bg-slate-900 text-slate-800 dark:text-white py-16 sm:py-24 px-4 sm:px-6 lg:px-8 border-b border-slate-200 dark:border-slate-800">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-slate-100/50 via-white to-white dark:from-slate-950 dark:via-slate-950 dark:to-slate-950 -z-10" />
+        {/* Ambient Gradient Orbs */}
+        <div className="absolute top-0 right-1/4 w-96 h-96 bg-amber-500/10 dark:bg-amber-500/15 rounded-full filter blur-3xl animate-pulse-glow -z-10" />
+        <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-blue-600/10 dark:bg-blue-600/15 rounded-full filter blur-3xl animate-pulse-glow -z-10" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-slate-100/60 via-white to-white dark:from-slate-950 dark:via-slate-950 dark:to-slate-950 -z-10" />
         
         {/* Subtle legal grid background */}
-        <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.03] pointer-events-none bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:24px_24px] -z-10" />
+        <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:24px_24px] -z-10" />
 
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-7 space-y-6 text-left">
-            <span className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-secondary text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-800">
-              <Landmark className="w-3.5 h-3.5 text-slate-900 dark:text-secondary" /> {t('tagline')}
+            
+            {/* Glowing Pill Badge */}
+            <span className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500/10 via-amber-500/20 to-amber-500/10 dark:from-amber-400/10 dark:to-amber-400/20 text-slate-900 dark:text-amber-400 text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full border border-amber-500/30 dark:border-amber-400/30 shadow-sm backdrop-blur-md">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+              <Landmark className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" /> {t('tagline')}
             </span>
+
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-black leading-tight tracking-tight text-slate-900 dark:text-white">
-              {t('heroTitle')}
+              Master Law Exams with <span className="gradient-text">KSLU Peer Resources</span>
             </h1>
-            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-xl leading-relaxed">
-              {t('heroSubtitle')}
+
+            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-xl leading-relaxed">
+              Access semester-wise lecture notes, previous year question papers, official syllabus modules, and study guides created specifically for law students across Karnataka.
             </p>
-            <div className="flex flex-wrap gap-4 pt-2">
-              <Link to="/notes" className="bg-slate-900 hover:bg-slate-800 dark:bg-secondary dark:hover:bg-secondary-dark text-white dark:text-primary px-6 py-3 rounded-2xl text-xs font-black shadow-md transition-transform active:scale-95 flex items-center gap-1.5">
-                {t('browseNotesBtn')} <ChevronRight className="w-4 h-4" />
+
+            <div className="flex flex-wrap gap-4 pt-3">
+              <Link to="/notes" className="bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 dark:from-amber-400 dark:to-amber-500 dark:hover:from-amber-500 dark:hover:to-amber-600 text-white dark:text-slate-950 px-7 py-3.5 rounded-2xl text-xs font-black shadow-lg hover:shadow-xl transition-all active:scale-95 flex items-center gap-2">
+                <BookOpen className="w-4 h-4" /> {t('browseNotesBtn')} <ChevronRight className="w-4 h-4" />
               </Link>
-              <Link to="/papers" className="bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-6 py-3 rounded-2xl text-xs font-black transition-transform active:scale-95">
-                {t('previousPapersBtn')}
+              <Link to="/papers" className="bg-white hover:bg-slate-50 dark:bg-slate-850 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-250 dark:border-slate-750 px-7 py-3.5 rounded-2xl text-xs font-black transition-all shadow-sm hover:shadow active:scale-95 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-amber-500" /> {t('previousPapersBtn')}
               </Link>
             </div>
           </div>
 
-          {/* Minimal Legal Illustration Panel */}
+          {/* Interactive Glassmorphism Hero Showcase */}
           <div className="lg:col-span-5 hidden lg:flex justify-center relative">
-            <div className="absolute w-72 h-72 bg-slate-200/50 dark:bg-slate-800/20 filter blur-3xl rounded-full top-10 right-10 -z-10" />
-            <div className="bg-white dark:bg-slate-850/60 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 max-w-sm w-full shadow-xl relative backdrop-blur-md">
-              <div className="absolute -top-6 -left-6 bg-secondary text-primary p-3 rounded-2xl shadow-lg ring-4 ring-white dark:ring-slate-900">
-                <Scale className="w-6 h-6 text-white" />
+            
+            {/* Main Floating Glass Panel */}
+            <div className="animate-float-slow glass-panel rounded-3xl p-7 max-w-md w-full shadow-2xl relative">
+              <div className="absolute -top-5 -left-5 bg-gradient-to-r from-amber-500 to-amber-600 text-white p-3 rounded-2xl shadow-xl ring-4 ring-white dark:ring-slate-900">
+                <Scale className="w-6 h-6" />
               </div>
-              <div className="space-y-4 pt-4">
-                <h3 className="text-sm font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                  <Landmark className="w-4 h-4 text-secondary" /> KSLU Course Syllabus
-                </h3>
-                <div className="space-y-2.5 text-[11px] text-slate-500 dark:text-slate-400">
-                  <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
-                    <span>3-Year LL.B Course Syllabus</span>
-                    <span className="text-secondary font-bold">Updated</span>
+
+              <div className="space-y-4 pt-3">
+                <div className="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-800 pb-3">
+                  <h3 className="text-xs font-black text-slate-900 dark:text-slate-100 flex items-center gap-2 uppercase tracking-wider">
+                    <Landmark className="w-4 h-4 text-amber-500" /> KSLU Knowledge Hub
+                  </h3>
+                  <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[9px] font-black px-2 py-0.5 rounded-full border border-emerald-500/20">
+                    LIVE REPOSITORY
+                  </span>
+                </div>
+
+                <div className="space-y-3 text-[11px] font-medium text-slate-600 dark:text-slate-300">
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-150 dark:border-slate-750">
+                    <span className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                      3-Year LL.B Exam Notes & Summaries
+                    </span>
+                    <span className="text-amber-500 font-bold text-[10px]">Verified</span>
                   </div>
-                  <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
-                    <span>5-Year B.A. LL.B Pre-law Grid</span>
-                    <span className="text-secondary font-bold">Updated</span>
+
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-150 dark:border-slate-750">
+                    <span className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-blue-500" />
+                      5-Year B.A. LL.B Question Papers
+                    </span>
+                    <span className="text-amber-500 font-bold text-[10px]">2015-2026</span>
                   </div>
-                  <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
-                    <span>Constitutional Law Case Digests</span>
-                    <span className="text-secondary font-bold">New</span>
+
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-150 dark:border-slate-750">
+                    <span className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                      Official Syllabus & Subject Digests
+                    </span>
+                    <span className="text-emerald-500 font-bold text-[10px]">Active</span>
                   </div>
                 </div>
-                <div className="pt-2 text-center">
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">Learn • Share • Succeed</span>
+
+                <div className="pt-3 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 font-bold">
+                  <span>Peer Sharing Platform</span>
+                  <span className="text-amber-500">100% Free Access</span>
                 </div>
               </div>
             </div>
+
+            {/* Sub Floating Badge */}
+            <div className="absolute -bottom-6 -right-4 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-750 p-3.5 rounded-2xl shadow-xl flex items-center gap-3 backdrop-blur-md">
+              <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold text-base">
+                🏆
+              </div>
+              <div>
+                <p className="text-xs font-black text-slate-900 dark:text-white leading-none">10,000+ Downloads</p>
+                <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold mt-0.5">Law Students Empowered</p>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
 
       {/* Search & Quick Filters Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 sm:-mt-16 relative z-20">
-        <div className="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 p-6 rounded-3xl shadow-xl space-y-4">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 sm:p-8 rounded-3xl shadow-2xl space-y-4 backdrop-blur-xl">
           <MaterialSearch 
             onSearch={handleSearchSubmit} 
             placeholder={t('searchPlaceholder')} 
@@ -179,7 +221,7 @@ const Home = () => {
               <button
                 key={index}
                 onClick={() => navigate(filter.path)}
-                className="bg-slate-50 hover:bg-slate-100 dark:bg-slate-850 dark:hover:bg-slate-800 border border-gray-150 dark:border-slate-750 text-slate-700 dark:text-slate-350 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all hover:scale-[1.02]"
+                className="bg-slate-50 hover:bg-slate-100 dark:bg-slate-850 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-750 text-slate-700 dark:text-slate-300 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all hover:scale-[1.03] shadow-xs"
               >
                 {filter.label}
               </button>
@@ -188,39 +230,28 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Stats Section - ONLY visible after login */}
-      {isAuthenticated && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {statsLoading ? (
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="h-20 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-2xl" />
-              ))}
+      {/* Public Platform Statistics Bar */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { id: 'notes', label: 'Study Notes Available', value: stats?.totalNotes || '1,200+', icon: <FileText className="w-5 h-5 text-amber-500" />, bg: 'bg-amber-50 dark:bg-amber-950/20 border-amber-200/50 dark:border-amber-900/30' },
+            { id: 'papers', label: 'Question Papers', value: stats?.totalPapers || '850+', icon: <BookOpen className="w-5 h-5 text-blue-500" />, bg: 'bg-blue-50 dark:bg-blue-950/20 border-blue-200/50 dark:border-blue-900/30' },
+            { id: 'downloads', label: 'Total Downloads', value: stats?.totalDownloads || '15,000+', icon: <Download className="w-5 h-5 text-emerald-500" />, bg: 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200/50 dark:border-emerald-900/30' },
+            { id: 'users', label: 'Law Students Community', value: stats?.totalUsers || '5,000+', icon: <Users className="w-5 h-5 text-indigo-500" />, bg: 'bg-indigo-50 dark:bg-indigo-950/20 border-indigo-200/50 dark:border-indigo-900/30' },
+          ].map((card) => (
+            <div 
+              key={card.id} 
+              className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5`}
+            >
+              <div className={`p-3 rounded-xl border ${card.bg}`}>{card.icon}</div>
+              <div>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white leading-none">{card.value}</h3>
+                <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wider">{card.label}</p>
+              </div>
             </div>
-          ) : stats ? (
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-              {[
-                { id: 'notes', label: t('studyNotes'), value: stats.totalNotes, icon: <FileText className="w-5 h-5 text-slate-800 dark:text-slate-200" />, bg: 'bg-slate-100 dark:bg-slate-800' },
-                { id: 'papers', label: t('papers'), value: stats.totalPapers, icon: <BookOpen className="w-5 h-5 text-amber-600 dark:text-secondary" />, bg: 'bg-amber-50 dark:bg-secondary/10' },
-                { id: 'syllabus', label: 'Syllabus', value: stats.totalSyllabus || 0, icon: <Layers className="w-5 h-5 text-indigo-650 dark:text-indigo-400" />, bg: 'bg-indigo-50 dark:bg-indigo-950/20' },
-                { id: 'downloads', label: t('totalDownloads'), value: stats.totalDownloads, icon: <Download className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />, bg: 'bg-emerald-50 dark:bg-emerald-950/20' },
-                { id: 'users', label: t('activeStudents'), value: stats.totalUsers, icon: <Users className="w-5 h-5 text-amber-600 dark:text-amber-500" />, bg: 'bg-amber-50 dark:bg-amber-950/20' },
-              ].map((card) => (
-                <div 
-                  key={card.id} 
-                  className="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-2xl p-5 flex items-center gap-4 shadow-sm"
-                >
-                  <div className={`p-3 rounded-xl ${card.bg}`}>{card.icon}</div>
-                  <div>
-                    <h3 className="text-xl font-black text-slate-900 dark:text-white leading-none">{card.value}</h3>
-                    <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wider">{card.label}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : null}
-        </section>
-      )}
+          ))}
+        </div>
+      </section>
 
       {/* Browse by Course */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
