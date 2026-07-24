@@ -167,7 +167,7 @@ const Notes = () => {
                 🎓
               </div>
               <h3 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider">
-                Step 1: Select Your Law Course
+                Select Your Law Course
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
                 Please select your program (3-Year LL.B, B.A. LL.B, B.B.A. LL.B, etc.) from the left filter panel to proceed.
@@ -179,7 +179,7 @@ const Notes = () => {
                 📚
               </div>
               <h3 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider">
-                Step 2: Select Your Semester
+                Select Your Semester
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
                 Select your semester (S1 - {filters.course.includes('3-Year') ? 'S6' : 'S10'}) from the left filter panel to reveal available study notes.

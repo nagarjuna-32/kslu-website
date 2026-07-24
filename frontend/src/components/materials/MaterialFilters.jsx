@@ -34,10 +34,10 @@ const MaterialFilters = ({ filters, setFilters, showYearFilter = false }) => {
 
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 rounded-3xl p-6 space-y-6 shadow-sm">
-      {/* Step 1: Course Filter (Always Visible) */}
+      {/* Course Filter (Always Visible) */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">Step 1: Law Course</h4>
+          <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">Law Course</h4>
           {filters.course && (
             <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md">✓ Selected</span>
           )}
@@ -62,12 +62,12 @@ const MaterialFilters = ({ filters, setFilters, showYearFilter = false }) => {
         </div>
       </div>
 
-      {/* Step 2: Semester (Only Visible AFTER Course is selected) */}
+      {/* Semester (Only Visible AFTER Course is selected) */}
       {filters.course && (
         <div className="animate-fadeIn">
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">
-              Step 2: Semester ({maxSemesters} Semesters)
+              Semester
             </h4>
             {filters.semester && (
               <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md">✓ Selected</span>
@@ -94,10 +94,10 @@ const MaterialFilters = ({ filters, setFilters, showYearFilter = false }) => {
         </div>
       )}
 
-      {/* Step 3: Marks Scheme Filter (Only for Question Papers AFTER Semester is selected) */}
+      {/* Marks Scheme Filter (Only for Question Papers AFTER Semester is selected) */}
       {filters.course && filters.semester && (filters.type === 'pyq' || filters.type === 'paper' || showYearFilter) && (
         <div className="animate-fadeIn">
-          <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider mb-3">Step 3: Marks Scheme</h4>
+          <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider mb-3">Marks Scheme</h4>
           <div className="flex gap-2">
             {[
               { value: '80', label: '80 Marks' },
