@@ -102,3 +102,15 @@ select::placeholder {
     padding-bottom: env(safe-area-inset-bottom);
   }
 }
+
+/* Ensure all text classes map to pure white in dark mode, excluding accents like gold/red/green */
+.dark,
+.dark body,
+.dark [class*="text-slate-"],
+.dark [class*="text-gray-"],
+.dark [class*="text-light-text"],
+.dark [class*="text-dark-text"],
+.dark [class*="text-primary"] {
+  color: #ffffff;
+}
+

@@ -26,7 +26,7 @@ export default {
         },
         dark: {
           bg: '#020617',
-          text: '#F8FAFC'
+          text: '#ffffff'
         },
         gray: {
           50: '#F8FAFC',
