@@ -28,6 +28,7 @@ const Upload = () => {
       university: 'KSLU',
       marks: '80',
       year: new Date().getFullYear().toString(),
+      month: '',
       subjectCode: '',
       subjectName: ''
     }
@@ -39,6 +40,7 @@ const Upload = () => {
   const watchedSubjectName = watch('subjectName');
   const watchedMarks = watch('marks');
   const watchedYear = watch('year');
+  const watchedMonth = watch('month');
 
   const courseId = selectedCourse?.toLowerCase().replace(/\s+/g, '-').replace(/\./g, '');
   const subjectsList = SUBJECTS_MAP[courseId]?.[selectedSemester] || [];
@@ -66,15 +68,16 @@ const Upload = () => {
     const semLabel = `Semester ${selectedSemester}`;
     const year = watchedYear || new Date().getFullYear();
     const marks = watchedMarks || '80';
+    const monthStr = watchedMonth ? ` ${watchedMonth}` : '';
 
     let autoTitle = '';
     let autoDesc = '';
     let autoTags = '';
 
     if (resourceType === 'pyq') {
-      autoTitle = `${subjectLabel} - PYQ ${year} (${marks} Marks)`;
-      autoDesc = `Previous Year Question Paper for ${subjectLabel} (${semLabel}) — ${marks} Marks Scheme, Exam Year ${year}. KSLU ${courseLabel}.`;
-      autoTags = `pyq, ${subjectLabel.toLowerCase().replace(/[^a-z0-9]/g, '-')}, ${semLabel.toLowerCase().replace(' ', '-')}, ${year}, ${marks}-marks`;
+      autoTitle = `${subjectLabel} - PYQ${monthStr} ${year} (${marks} Marks)`;
+      autoDesc = `Previous Year Question Paper for ${subjectLabel} (${semLabel}) — ${marks} Marks Scheme, Exam Month/Year:${monthStr} ${year}. KSLU ${courseLabel}.`;
+      autoTags = `pyq, ${subjectLabel.toLowerCase().replace(/[^a-z0-9]/g, '-')}, ${semLabel.toLowerCase().replace(' ', '-')}, ${year}, ${marks}-marks${watchedMonth ? `, ${watchedMonth.toLowerCase()}` : ''}`;
     } else if (resourceType === 'note') {
       autoTitle = `${subjectLabel} - Study Notes`;
       autoDesc = `Study notes and summaries for ${subjectLabel} (${semLabel}). KSLU ${courseLabel}.`;
@@ -92,7 +95,7 @@ const Upload = () => {
     if (autoTitle) setValue('title', autoTitle);
     if (autoDesc) setValue('description', autoDesc);
     if (autoTags) setValue('tags', autoTags);
-  }, [watchedSubjectName, resourceType, watchedYear, watchedMarks, selectedSemester, selectedCourse, setValue]);
+  }, [watchedSubjectName, resourceType, watchedYear, watchedMonth, watchedMarks, selectedSemester, selectedCourse, setValue]);
 
   // Pre-fill fields from URL query parameters (from subject pages)
   useEffect(() => {
@@ -212,7 +215,8 @@ const Upload = () => {
           semester: '1',
           university: 'KSLU',
           marks: '80',
-          year: new Date().getFullYear().toString()
+          year: new Date().getFullYear().toString(),
+          month: ''
         });
         setFile(null);
         fetchMyUploads(); // Instantly update active history list
@@ -381,6 +385,21 @@ const Upload = () => {
                     </select>
                     {errors.year && <p className="text-xs text-red-500 mt-1 font-medium">{errors.year.message}</p>}
                   </div>
+
+                  {watchedYear && (
+                    <div className="animate-fadeIn">
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Exam Month</label>
+                      <select
+                        {...register('month')}
+                        className="w-full bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-750 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
+                      >
+                        <option value="">-- None / Select Month --</option>
+                        {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </>
               )}
 
