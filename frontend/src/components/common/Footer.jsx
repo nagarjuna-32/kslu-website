@@ -64,7 +64,15 @@ const Footer = () => {
 
         </div>
 
-        <div className="border-t border-slate-100 dark:border-slate-800 mt-8 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+        {/* Disclaimer Notice */}
+        <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
+          <p className="text-[10px] sm:text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+            <span className="font-bold text-slate-700 dark:text-slate-200">Disclaimer: </span>
+            KSLU Circle is an independent student learning platform created to help law students. It is not affiliated with, endorsed by, or operated by Karnataka State Law University. Official notifications, results, and regulations should always be verified on the official KSLU website.
+          </p>
+        </div>
+
+        <div className="border-t border-slate-100 dark:border-slate-800 mt-6 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">
             © {new Date().getFullYear()} KSLU Circle. {t('createdFor')}
           </p>
