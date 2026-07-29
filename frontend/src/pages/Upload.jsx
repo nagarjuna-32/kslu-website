@@ -75,8 +75,8 @@ const Upload = () => {
     let autoTags = '';
 
     if (resourceType === 'pyq') {
-      autoTitle = `${subjectLabel} - PYQ${monthStr} ${year} (${marks} Marks)`;
-      autoDesc = `Previous Year Question Paper for ${subjectLabel} (${semLabel}) — ${marks} Marks Scheme, Exam Month/Year:${monthStr} ${year}. KSLU ${courseLabel}.`;
+      autoTitle = `${subjectLabel} - PYQ${monthStr} ${year} (${marks === '80' ? '80-20' : '100 Marks'} Pattern)`;
+      autoDesc = `Previous Year Question Paper for ${subjectLabel} (${semLabel}) — ${marks === '80' ? '80-20' : '100 Marks'} Pattern, Exam Month/Year:${monthStr} ${year}. KSLU ${courseLabel}.`;
       autoTags = `pyq, ${subjectLabel.toLowerCase().replace(/[^a-z0-9]/g, '-')}, ${semLabel.toLowerCase().replace(' ', '-')}, ${year}, ${marks}-marks${watchedMonth ? `, ${watchedMonth.toLowerCase()}` : ''}`;
     } else if (resourceType === 'note') {
       autoTitle = `${subjectLabel} - Study Notes`;
@@ -362,13 +362,13 @@ const Upload = () => {
               {resourceType === 'pyq' && (
                 <>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{t('marks')} / Scheme *</label>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Exam Pattern *</label>
                     <select
                       {...register('marks', { required: true })}
                       className="w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-royal"
                     >
-                      <option value="80">80 Marks Scheme</option>
-                      <option value="100">100 Marks Scheme</option>
+                      <option value="80">80-20 Pattern</option>
+                      <option value="100">100 Marks Pattern</option>
                     </select>
                   </div>
 

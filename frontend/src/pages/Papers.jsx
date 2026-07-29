@@ -36,6 +36,7 @@ const Papers = () => {
     course: '',
     semester: '',
     university: '',
+    marks: '',
     year: '',
     sortBy: 'newest',
     search: getInitialSearch()
@@ -53,6 +54,11 @@ const Papers = () => {
     }));
     setPage(1);
   }, [location]);
+
+  // Reset page to 1 when filters change to avoid out of bounds pages
+  useEffect(() => {
+    setPage(1);
+  }, [filters.course, filters.semester, filters.university, filters.year, filters.sortBy, filters.search, filters.marks]);
 
   const fetchBookmarks = async () => {
     if (isAuthenticated) {
@@ -82,13 +88,14 @@ const Papers = () => {
 
     setLoading(true);
     try {
-      const { course, semester, university, year, sortBy, search } = filters;
+      const { course, semester, university, year, sortBy, search, marks } = filters;
       
       let queryParams = `?type=paper&page=${page}&limit=9&sortBy=${sortBy}`;
       if (course) queryParams += `&course=${encodeURIComponent(course)}`;
       if (semester) queryParams += `&semester=${semester}`;
       if (university) queryParams += `&university=${university}`;
       if (year) queryParams += `&year=${year}`;
+      if (marks) queryParams += `&marks=${marks}`;
       if (search) queryParams += `&search=${encodeURIComponent(search)}`;
 
       const response = await api.get(`/materials${queryParams}`);
@@ -113,7 +120,6 @@ const Papers = () => {
 
   const handleSearch = (searchTerm) => {
     setFilters(prev => ({ ...prev, search: searchTerm }));
-    setPage(1);
   };
 
   const handleBookmarkToggle = (materialId, isBookmarked) => {
@@ -183,7 +189,7 @@ const Papers = () => {
                 Select Your Semester
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
-                Select your semester (S1 - {filters.course.includes('3-Year') ? 'S6' : 'S10'}) from the left filter panel to reveal Marks Scheme, Paper Year & Question Papers.
+                Select your semester (S1 - {filters.course.includes('3-Year') ? 'S6' : 'S10'}) from the left filter panel to reveal Exam Pattern, Paper Year & Question Papers.
               </p>
             </div>
           ) : materials.length === 0 ? (

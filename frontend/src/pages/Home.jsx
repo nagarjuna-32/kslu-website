@@ -225,14 +225,14 @@ const Home = () => {
 
                 {heroTab === 'pyqs' && (
                   <div className="space-y-2.5 text-[11px]">
-                    <p className="text-slate-500 dark:text-slate-400 font-medium">Instant PYQ Downloads by Marks Scheme:</p>
+                    <p className="text-slate-500 dark:text-slate-400 font-medium">Instant PYQ Downloads by Exam Pattern:</p>
                     <div className="grid grid-cols-2 gap-2">
                       <Link to="/papers?marks=80" className="p-3 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-xl text-center transition-all">
-                        <span className="block font-black text-amber-600 dark:text-amber-400 text-sm">80 Marks</span>
+                        <span className="block font-black text-amber-600 dark:text-amber-400 text-sm">80-20 Pattern</span>
                         <span className="text-[10px] text-slate-500 dark:text-slate-400">Regular Exams</span>
                       </Link>
                       <Link to="/papers?marks=100" className="p-3 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-xl text-center transition-all">
-                        <span className="block font-black text-blue-600 dark:text-blue-400 text-sm">100 Marks</span>
+                        <span className="block font-black text-blue-600 dark:text-blue-400 text-sm">100 Marks Pattern</span>
                         <span className="text-[10px] text-slate-500 dark:text-slate-400">Non-CBCS Papers</span>
                       </Link>
                     </div>

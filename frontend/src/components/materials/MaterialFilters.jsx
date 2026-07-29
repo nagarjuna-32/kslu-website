@@ -94,14 +94,14 @@ const MaterialFilters = ({ filters, setFilters, showYearFilter = false }) => {
         </div>
       )}
 
-      {/* Marks Scheme Filter (Only for Question Papers AFTER Semester is selected) */}
+      {/* Exam Pattern Filter (Only for Question Papers AFTER Semester is selected) */}
       {filters.course && filters.semester && (filters.type === 'pyq' || filters.type === 'paper' || showYearFilter) && (
         <div className="animate-fadeIn">
-          <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider mb-3">Marks Scheme</h4>
+          <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider mb-3">Exam Pattern</h4>
           <div className="flex gap-2">
             {[
-              { value: '80', label: '80 Marks' },
-              { value: '100', label: '100 Marks' }
+              { value: '80', label: '80-20 Pattern' },
+              { value: '100', label: '100 Marks Pattern' }
             ].map(opt => {
               const isSelected = filters.marks === opt.value;
               return (
