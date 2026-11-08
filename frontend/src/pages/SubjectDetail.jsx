@@ -218,7 +218,7 @@ const SubjectDetail = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {materials.map(mat => (
-              <MaterialCard key={mat._id} material={mat} />
+              <MaterialCard key={mat.id} material={mat} />
             ))}
           </div>
         )}
