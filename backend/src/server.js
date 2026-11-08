@@ -1,4 +1,9 @@
 require('dotenv').config();
+
+// Render provides RENDER_SERVICE_ID for deployed services. Never run a hosted service in development mode.
+if (process.env.RENDER_SERVICE_ID) {
+  process.env.NODE_ENV = 'production';
+}
 const express = require('express');
 const http = require('http');
 const path = require('path');
