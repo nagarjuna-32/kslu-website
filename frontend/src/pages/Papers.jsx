@@ -65,7 +65,7 @@ const Papers = () => {
       try {
         const response = await api.get('/bookmarks');
         if (response.data.success) {
-          setBookmarkedIds(new Set(response.data.bookmarks.map(b => b.material._id)));
+          setBookmarkedIds(new Set(response.data.bookmarks.map(b => b.material.id)));
         }
       } catch (err) {
         console.error('Failed to load bookmarks:', err);
@@ -207,9 +207,9 @@ const Papers = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {materials.map(mat => (
                   <MaterialCard 
-                    key={mat._id} 
+                    key={mat.id} 
                     material={mat} 
-                    initialBookmarked={bookmarkedIds.has(mat._id)}
+                    initialBookmarked={bookmarkedIds.has(mat.id)}
                     onBookmarkToggle={handleBookmarkToggle}
                   />
                 ))}

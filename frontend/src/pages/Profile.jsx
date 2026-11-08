@@ -107,7 +107,7 @@ const Profile = () => {
     try {
       const response = await api.delete(`/materials/${id}`);
       if (response.data.success) {
-        setUploads(prev => prev.filter(item => item._id !== id));
+        setUploads(prev => prev.filter(item => item.id !== id));
         toast.success('Material deleted successfully');
       }
     } catch (err) {
@@ -118,7 +118,7 @@ const Profile = () => {
   const handleUnbookmark = async (materialId) => {
     try {
       await api.delete(`/bookmarks/${materialId}`);
-      setBookmarks(prev => prev.filter(b => b.material._id !== materialId));
+      setBookmarks(prev => prev.filter(b => b.material.id !== materialId));
       toast.success('Bookmark removed');
     } catch (err) {
       toast.error(err.message || 'Failed to remove bookmark');
@@ -294,7 +294,7 @@ const Profile = () => {
                       </thead>
                       <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                         {uploads.map(item => (
-                          <tr key={item._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/10">
+                          <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/10">
                             <td className="p-4 font-bold text-slate-850 dark:text-slate-255 truncate max-w-xs">{item.title}</td>
                             <td className="p-4">
                               <span className="uppercase text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-655 dark:text-slate-350">
@@ -317,7 +317,7 @@ const Profile = () => {
                             </td>
                             <td className="p-4 text-right">
                               <button
-                                onClick={() => handleDeleteUpload(item._id)}
+                                onClick={() => handleDeleteUpload(item.id)}
                                 className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-955/15 rounded-xl transition-colors"
                                 title="Delete Upload"
                               >
@@ -347,8 +347,8 @@ const Profile = () => {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   {bookmarks.map(b => (
-                    <div key={b._id} className="relative">
-                      <MaterialCard material={b.material} initialBookmarked={true} onBookmarkToggle={() => handleUnbookmark(b.material._id)} />
+                    <div key={b.id} className="relative">
+                      <MaterialCard material={b.material} initialBookmarked={true} onBookmarkToggle={() => handleUnbookmark(b.material.id)} />
                     </div>
                   ))}
                 </div>

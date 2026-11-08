@@ -60,12 +60,12 @@ const Announcements = () => {
 
   const handleToggleActive = async (item) => {
     try {
-      const response = await api.put(`/admin/announcements/${item._id}`, {
+      const response = await api.put(`/admin/announcements/${item.id}`, {
         isActive: !item.isActive
       });
       if (response.data.success) {
         setAnnouncements(prev => prev.map(a => 
-          a._id === item._id ? { ...a, isActive: response.data.announcement.isActive } : a
+          a.id === item.id ? { ...a, isActive: response.data.announcement.isActive } : a
         ));
         toast.success(`Announcement ${!item.isActive ? 'activated' : 'deactivated'}`);
       }
@@ -79,7 +79,7 @@ const Announcements = () => {
     try {
       const response = await api.delete(`/admin/announcements/${id}`);
       if (response.data.success) {
-        setAnnouncements(prev => prev.filter(a => a._id !== id));
+        setAnnouncements(prev => prev.filter(a => a.id !== id));
         toast.success('Announcement deleted');
       }
     } catch (err) {
@@ -173,7 +173,7 @@ const Announcements = () => {
             <div className="space-y-4">
               {announcements.map((item) => (
                 <div 
-                  key={item._id}
+                  key={item.id}
                   className={`bg-white dark:bg-gray-900 border rounded-3xl p-5 shadow-sm flex justify-between items-start gap-4 transition-all ${
                     !item.isActive 
                       ? 'border-gray-200 dark:border-gray-850 opacity-60' 
@@ -221,7 +221,7 @@ const Announcements = () => {
                       )}
                     </button>
                     <button
-                      onClick={() => handleDelete(item._id)}
+                      onClick={() => handleDelete(item.id)}
                       className="p-1 text-gray-400 hover:text-red-500"
                       title="Delete alert"
                     >
