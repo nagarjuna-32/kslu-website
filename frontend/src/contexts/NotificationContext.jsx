@@ -53,7 +53,7 @@ export const NotificationProvider = ({ children }) => {
       });
 
       newSocket.on('connect', () => {
-        newSocket.emit('register', user._id);
+        newSocket.emit('register', user.id);
       });
 
       newSocket.on('notification', (notification) => {
@@ -93,7 +93,7 @@ export const NotificationProvider = ({ children }) => {
       const response = await api.put(`/notifications/${id}/read`);
       if (response.data.success) {
         setNotifications(prev => 
-          prev.map(n => n._id === id ? { ...n, isRead: true } : n)
+          prev.map(n => n.id === id ? { ...n, isRead: true } : n)
         );
         setUnreadCount(prev => Math.max(0, prev - 1));
       }
@@ -119,8 +119,8 @@ export const NotificationProvider = ({ children }) => {
     try {
       const response = await api.delete(`/notifications/${id}`);
       if (response.data.success) {
-        const deleted = notifications.find(n => n._id === id);
-        setNotifications(prev => prev.filter(n => n._id !== id));
+        const deleted = notifications.find(n => n.id === id);
+        setNotifications(prev => prev.filter(n => n.id !== id));
         if (deleted && !deleted.isRead) {
           setUnreadCount(prev => Math.max(0, prev - 1));
         }
