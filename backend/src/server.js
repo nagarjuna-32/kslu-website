@@ -18,6 +18,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const bookmarkRoutes = require('./routes/bookmarkRoutes');
 const statsRoutes = require('./routes/statsRoutes');
+const pyqRoutes = require('./routes/pyqRoutes');
 
 // Connect to Database
 connectDB();
@@ -59,6 +60,7 @@ app.use('/api/materials', materialRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/bookmarks', bookmarkRoutes);
+app.use('/api/pyqs', pyqRoutes);
 app.use('/api', statsRoutes);
 
 // Health check endpoint

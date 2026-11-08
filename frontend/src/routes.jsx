@@ -28,6 +28,7 @@ import AdminAnnouncements from './pages/Admin/Announcements';
 import AdminAnalytics from './pages/Admin/Analytics';
 import AdminLogs from './pages/Admin/ActivityLogs';
 import AdminSettings from './pages/Admin/Settings';
+import AdminDriveSync from './pages/Admin/DriveSync';
 
 // Helper auth guard component
 const ProtectedRoute = ({ children }) => {
@@ -77,6 +78,7 @@ const AppRoutes = () => {
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="moderation" element={<AdminModeration />} />
+            <Route path="pyq-sync" element={<AdminDriveSync />} />
             <Route path="content" element={<AdminContent />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="announcements" element={<AdminAnnouncements />} />

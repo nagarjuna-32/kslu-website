@@ -20,8 +20,10 @@ const {
   getActivityLogs,
   updateSettings
 } = require('../controllers/adminController');
+const { syncGoogleDrive, getSyncStatus } = require('../controllers/pyqController');
 const { protect } = require('../middleware/auth');
 const { authorize } = require('../middleware/admin');
+const { pyqSyncLimiter } = require('../middleware/rateLimit');
 
 // All admin routes require authentication and admin/superadmin roles
 router.use(protect);
@@ -48,5 +50,9 @@ router.get('/analytics', getAnalytics);
 router.get('/analytics/export', exportAnalyticsCSV);
 router.get('/activity-logs', getActivityLogs);
 router.put('/settings', updateSettings);
+
+// Google Drive PYQ Synchronization
+router.post('/pyqs/sync', pyqSyncLimiter, syncGoogleDrive);
+router.get('/pyqs/sync-status', getSyncStatus);
 
 module.exports = router;

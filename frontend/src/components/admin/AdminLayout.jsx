@@ -3,7 +3,7 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
   LayoutDashboard, ShieldCheck, FileSpreadsheet, Users, 
-  Megaphone, BarChart3, History, Settings, ArrowLeft, Menu, X 
+  Megaphone, BarChart3, History, Settings, ArrowLeft, Menu, X, FolderTree 
 } from 'lucide-react';
 
 const AdminLayout = () => {
@@ -29,6 +29,7 @@ const AdminLayout = () => {
   const menuItems = [
     { path: '/admin', label: 'Dashboard Overview', icon: <LayoutDashboard className="w-4 h-4" /> },
     { path: '/admin/moderation', label: 'Pending Moderation', icon: <ShieldCheck className="w-4 h-4" /> },
+    { path: '/admin/pyq-sync', label: 'Google Drive Sync', icon: <FolderTree className="w-4 h-4" /> },
     { path: '/admin/content', label: 'Content Manager', icon: <FileSpreadsheet className="w-4 h-4" /> },
     { path: '/admin/users', label: 'User Management', icon: <Users className="w-4 h-4" /> },
     { path: '/admin/announcements', label: 'System Alerts', icon: <Megaphone className="w-4 h-4" /> },

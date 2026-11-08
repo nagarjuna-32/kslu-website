@@ -39,6 +39,7 @@ model User {
   bookmarks               Bookmark[]
   upvotedMaterials        StudyMaterial[] @relation("UpvotesRelation")
   downvotedMaterials      StudyMaterial[] @relation("DownvotesRelation")
+  pyqSyncLogs             PyqSyncLog[]    @relation("PyqSyncTriggeredBy")
 }
 
 model StudyMaterial {
@@ -137,4 +138,118 @@ model Bookmark {
   material   StudyMaterial @relation(fields: [materialId], references: [id], onDelete: Cascade)
 
   @@unique([userId, materialId])
+}
+
+model Course {
+  id              String       @id @default(uuid())
+  name            String       @unique // e.g. "3-Year LL.B", "B.A. LL.B", "B.B.A. LL.B"
+  code            String       @unique // slug e.g. "3-year-llb", "ba-llb", "bba-llb"
+  totalSemesters  Int          @default(6)
+  driveFolderId   String?
+  isActive        Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  semesters       Semester[]
+  pyqs            PYQ[]
+}
+
+model Semester {
+  id              String       @id @default(uuid())
+  semesterNumber  Int          // 1 to 10
+  name            String       // e.g. "Semester 1"
+  driveFolderId   String?
+  courseId        String
+  course          Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  subjects        Subject[]
+  pyqs            PYQ[]
+
+  @@unique([courseId, semesterNumber])
+}
+
+model Subject {
+  id              String       @id @default(uuid())
+  name            String       // e.g. "Constitutional Law - I"
+  code            String?      // e.g. "KSLU-3Y-101"
+  driveFolderId   String?
+  semesterId      String
+  semester        Semester     @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  schemes         SubjectScheme[]
+  pyqs            PYQ[]
+
+  @@unique([semesterId, name])
+}
+
+model SubjectScheme {
+  id              String       @id @default(uuid())
+  name            String       // "Scheme 80 Marks", "Scheme 100 Marks"
+  marks           Int          // 80 or 100
+  driveFolderId   String?
+  subjectId       String
+  subject         Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  pyqs            PYQ[]
+
+  @@unique([subjectId, marks])
+}
+
+model PYQ {
+  id                  String         @id @default(uuid())
+  title               String         // fileName or parsed display title
+  fileName            String
+  driveFileId         String         @unique // unique Google Drive file ID
+  driveFolderId       String?        // Scheme folder ID
+  driveWebViewLink    String?
+  mimeType            String         @default("application/pdf")
+  fileSize            Int?
+  driveModifiedTime   DateTime?
+  examYear            Int?           // Year if identifiable from filename (e.g. 2022, 2023)
+  examSession         String?        // Month/session if identifiable (e.g. "June", "Dec", "Jan")
+  isAvailable         Boolean        @default(true) // false if missing in a successful scan
+  downloads           Int            @default(0)
+  views               Int            @default(0)
+  lastSyncedAt        DateTime       @default(now())
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  // Relational hierarchy
+  schemeId            String
+  scheme              SubjectScheme  @relation(fields: [schemeId], references: [id], onDelete: Cascade)
+  subjectId           String
+  subject             Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  semesterId          String
+  semester            Semester       @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  courseId            String
+  course              Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, semesterId])
+  @@index([subjectId])
+  @@index([schemeId])
+  @@index([examYear])
+  @@index([isAvailable])
+}
+
+model PyqSyncLog {
+  id                  String       @id @default(uuid())
+  syncType            String       @default("full") // "full" or "incremental"
+  status              String       // "running", "completed", "failed"
+  filesFound          Int          @default(0)
+  filesImported       Int          @default(0)
+  filesUpdated        Int          @default(0)
+  filesUnavailable    Int          @default(0)
+  errorsCount         Int          @default(0)
+  errorDetails        String?      // Summary or error message
+  changeToken         String?      // Next change page token for incremental sync
+  startedAt           DateTime     @default(now())
+  completedAt         DateTime?
+  triggeredById       String?
+  triggeredBy         User?        @relation("PyqSyncTriggeredBy", fields: [triggeredById], references: [id], onDelete: SetNull)
 }
