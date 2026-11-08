@@ -497,7 +497,7 @@ const Home = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {featured.map(mat => (
-              <MaterialCard key={mat._id} material={mat} />
+              <MaterialCard key={mat.id} material={mat} />
             ))}
           </div>
         )}
@@ -531,7 +531,7 @@ const Home = () => {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {recent.slice(0, 4).map(mat => (
-                  <MaterialCard key={mat._id} material={mat} />
+                  <MaterialCard key={mat.id} material={mat} />
                 ))}
               </div>
             )}
@@ -554,7 +554,7 @@ const Home = () => {
                 <p className="text-xs text-slate-500 text-center py-4">Leaderboard currently empty.</p>
               ) : (
                 topContributors.map((c, idx) => (
-                  <div key={c._id || idx} className="flex items-center justify-between gap-2 py-1">
+                  <div key={c.id || idx} className="flex items-center justify-between gap-2 py-1">
                     <div className="flex items-center gap-3">
                       <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black ${
                         idx === 0 ? 'bg-yellow-500 text-white animate-bounce' : idx === 1 ? 'bg-slate-300 text-slate-800' : idx === 2 ? 'bg-amber-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
