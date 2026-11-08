@@ -50,7 +50,7 @@ const Syllabus = () => {
       try {
         const response = await api.get('/bookmarks');
         if (response.data.success) {
-          setBookmarkedIds(new Set(response.data.bookmarks.map(b => b.material.id || b.material._id)));
+          setBookmarkedIds(new Set(response.data.bookmarks.map(b => b.material.id)));
         }
       } catch (err) {
         console.error('Failed to load bookmarks:', err);
@@ -154,7 +154,7 @@ const Syllabus = () => {
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {materials.map(mat => {
-                  const matId = mat.id || mat._id;
+                  const matId = mat.id;
                   return (
                     <MaterialCard 
                       key={matId} 
