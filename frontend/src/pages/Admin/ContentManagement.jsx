@@ -103,6 +103,7 @@ const ContentManagement = () => {
                     <th className="p-4">Resource Details</th>
                     <th className="p-4">Subject</th>
                     <th className="p-4">Status</th>
+                    <th className="p-4">Status</th>
                     <th className="p-4 text-center">Downloads</th>
                     <th className="p-4 text-center">Views</th>
                     <th className="p-4">Uploader</th>
@@ -130,6 +131,13 @@ const ContentManagement = () => {
                             : item.status === 'rejected'
                               ? 'bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400'
                               : 'bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400'
+                        }`}>{item.status}</span>
+                      </td>
+                      <td className="p-4">
+                        <span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase ${
+                          item.status === 'approved' ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400' :
+                          item.status === 'rejected' ? 'bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400' :
+                          'bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400'
                         }`}>{item.status}</span>
                       </td>
                       <td className="p-4 text-center font-bold">{item.downloads}</td>
