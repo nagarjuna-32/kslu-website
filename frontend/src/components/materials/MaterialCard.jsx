@@ -12,8 +12,8 @@ const MaterialCard = ({ material, initialBookmarked = false, onBookmarkToggle = 
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   
-  const materialId = material.id || material._id;
-  const userId = user?.id || user?._id;
+  const materialId = material.id;
+  const userId = user?.id;
 
   const [isBookmarked, setIsBookmarked] = useState(initialBookmarked);
   const [votes, setVotes] = useState({
