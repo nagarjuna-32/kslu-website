@@ -1,4 +1,9 @@
 require('dotenv').config();
+
+// Render provides RENDER_SERVICE_ID for deployed services. Never run a hosted service in development mode.
+if (process.env.RENDER_SERVICE_ID) {
+  process.env.NODE_ENV = 'production';
+}
 const express = require('express');
 const http = require('http');
 const path = require('path');
@@ -6,7 +11,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 
-const { connectDB } = require('./config/database');
+const { prisma, connectDB } = require('./config/database');
 const { initSocket } = require('./config/socket');
 const logger = require('./utils/logger');
 const errorHandler = require('./middleware/errorHandler');
@@ -19,9 +24,6 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const bookmarkRoutes = require('./routes/bookmarkRoutes');
 const statsRoutes = require('./routes/statsRoutes');
 const pyqRoutes = require('./routes/pyqRoutes');
-
-// Connect to Database
-connectDB();
 
 const app = express();
 const server = http.createServer(app);
@@ -73,6 +75,32 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-server.listen(PORT, () => {
-  logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-});
+const startServer = async () => {
+  try {
+    await connectDB();
+    server.listen(PORT, () => {
+      logger.info(`Server running in ${process.env.NODE_ENV || 'production'} mode on port ${PORT}`);
+    });
+  } catch (error) {
+    logger.error(`Server startup aborted because PostgreSQL is unavailable: ${error.message}`);
+    process.exit(1);
+  }
+};
+
+const shutdown = async (signal) => {
+  logger.info(`${signal} received. Closing HTTP server and database connection.`);
+  server.close(async () => {
+    try {
+      await prisma.$disconnect();
+      process.exit(0);
+    } catch (error) {
+      logger.error(`Error while closing Prisma connection: ${error.message}`);
+      process.exit(1);
+    }
+  });
+};
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+
+startServer();

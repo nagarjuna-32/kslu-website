@@ -34,7 +34,7 @@ const UserManagement = () => {
     try {
       const response = await api.put(`/admin/users/${id}/role`, { role });
       if (response.data.success) {
-        setUsers(prev => prev.map(u => u._id === id ? { ...u, role: response.data.user.role } : u));
+        setUsers(prev => prev.map(u => u.id === id ? { ...u, role: response.data.user.role } : u));
         toast.success(`Role updated to ${role}`);
       }
     } catch (err) {
@@ -46,7 +46,7 @@ const UserManagement = () => {
     try {
       const response = await api.put(`/admin/users/${id}/ban`);
       if (response.data.success) {
-        setUsers(prev => prev.map(u => u._id === id ? { ...u, isBanned: response.data.user.isBanned } : u));
+        setUsers(prev => prev.map(u => u.id === id ? { ...u, isBanned: response.data.user.isBanned } : u));
         toast.success(response.data.message);
       }
     } catch (err) {
@@ -59,7 +59,7 @@ const UserManagement = () => {
     try {
       const response = await api.delete(`/admin/users/${id}`);
       if (response.data.success) {
-        setUsers(prev => prev.filter(u => u._id !== id));
+        setUsers(prev => prev.filter(u => u.id !== id));
         toast.success('User profile deleted successfully');
       }
     } catch (err) {
@@ -119,7 +119,7 @@ const UserManagement = () => {
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
                 {filteredUsers.map(item => (
-                  <tr key={item._id} className="hover:bg-gray-55/50 dark:hover:bg-gray-800/10">
+                  <tr key={item.id} className="hover:bg-gray-55/50 dark:hover:bg-gray-800/10">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         <img 
@@ -139,8 +139,8 @@ const UserManagement = () => {
                       {isSuperAdmin ? (
                         <select
                           value={item.role}
-                          onChange={(e) => handleRoleChange(item._id, e.target.value)}
-                          disabled={item._id === currentUser._id || item.role === 'superadmin'}
+                          onChange={(e) => handleRoleChange(item.id, e.target.value)}
+                          disabled={item.id === currentUser?.id || item.role === 'superadmin'}
                           className="bg-white dark:bg-gray-800 border border-gray-250 dark:border-gray-700 rounded-lg px-2 py-1 text-xs text-gray-700 dark:text-gray-300 focus:outline-none focus:border-secondary"
                         >
                           <option value="user">User</option>
@@ -154,8 +154,8 @@ const UserManagement = () => {
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
-                          onClick={() => handleToggleBan(item._id)}
-                          disabled={item._id === currentUser._id || item.role === 'superadmin'}
+                          onClick={() => handleToggleBan(item.id)}
+                          disabled={item.id === currentUser?.id || item.role === 'superadmin'}
                           className={`p-2 border rounded-xl transition-colors ${
                             item.isBanned 
                               ? 'bg-red-500 border-red-500 text-white' 
@@ -167,8 +167,8 @@ const UserManagement = () => {
                         </button>
                         {isSuperAdmin && (
                           <button
-                            onClick={() => handleDeleteUser(item._id)}
-                            disabled={item._id === currentUser._id || item.role === 'superadmin'}
+                            onClick={() => handleDeleteUser(item.id)}
+                            disabled={item.id === currentUser?.id || item.role === 'superadmin'}
                             className="p-2 border border-gray-250 dark:border-gray-750 hover:border-red-500 text-gray-400 hover:text-red-500 rounded-xl transition-colors"
                             title="Delete User permanently"
                           >

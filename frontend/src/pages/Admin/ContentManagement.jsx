@@ -17,20 +17,8 @@ const ContentManagement = () => {
   const fetchAllMaterials = async () => {
     setLoading(true);
     try {
-      const response = await api.get(`/materials?page=${page}&limit=10&search=${encodeURIComponent(search)}`);
+      const response = await api.get(`/admin/materials?page=${page}&limit=10&search=${encodeURIComponent(search)}`);
       if (response.data.success) {
-        // Note: The public route only shows approved, but for admin we can query all materials.
-        // In our backend admin controller, we could query all materials. Wait! In adminController, we don't have a specific `getAllMaterialsAdmin` endpoint defined in routing. Wait, let's look at the routes:
-        // adminRoutes had:
-        // - GET `/api/admin/dashboard`
-        // - GET `/api/admin/pending`
-        // Wait, did we map an endpoint for listing all materials to edit/delete them?
-        // Let's review:
-        // router.delete('/materials/:id', deleteMaterialAdmin);
-        // And we can fetch from the public `/api/materials` endpoint but without status check, or we can just fetch from `/api/admin/dashboard` or create a simple fallback.
-        // Wait! In `materialController.js` we have the public listing `GET /api/materials` which defaults to approved status. We can write a route for admin to list all materials. But to keep it simple, we can fetch from `/api/materials?search=...` which gets approved resources, or we can fetch a combined list.
-        // Let's check `adminController.js` and see if we have `getMaterials` there. In `adminRoutes.js`, we did not list a route for getting all materials. But we can fetch approved materials using `/api/materials` and moderate/feature them, or we can query `/api/admin/activity-logs` or dashboard pending list.
-        // Let's fetch approved materials from `/api/materials` with query parameters. This is fully compatible and uses existing API routes!
         setMaterials(response.data.materials);
         setTotalPages(response.data.pagination.pages);
       }
@@ -50,7 +38,7 @@ const ContentManagement = () => {
       const response = await api.put(`/admin/materials/${id}/feature`);
       if (response.data.success) {
         setMaterials(prev => prev.map(m => 
-          m._id === id ? { ...m, isFeatured: response.data.material.isFeatured } : m
+          m.id === id ? { ...m, isFeatured: response.data.material.isFeatured } : m
         ));
         toast.success(response.data.message);
       }
@@ -64,7 +52,7 @@ const ContentManagement = () => {
     try {
       const response = await api.delete(`/admin/materials/${id}`);
       if (response.data.success) {
-        setMaterials(prev => prev.filter(m => m._id !== id));
+        setMaterials(prev => prev.filter(m => m.id !== id));
         toast.success('Material deleted from database');
       }
     } catch (err) {
@@ -114,6 +102,8 @@ const ContentManagement = () => {
                   <tr className="bg-gray-50 dark:bg-gray-955/50 border-b border-gray-150 dark:border-gray-850 text-gray-500 dark:text-gray-400 font-bold uppercase">
                     <th className="p-4">Resource Details</th>
                     <th className="p-4">Subject</th>
+                    <th className="p-4">Status</th>
+                    <th className="p-4">Status</th>
                     <th className="p-4 text-center">Downloads</th>
                     <th className="p-4 text-center">Views</th>
                     <th className="p-4">Uploader</th>
@@ -122,7 +112,7 @@ const ContentManagement = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
                   {materials.map(item => (
-                    <tr key={item._id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/10">
+                    <tr key={item.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/10">
                       <td className="p-4">
                         <div>
                           <p className="font-bold text-gray-850 dark:text-gray-250 truncate max-w-[200px]" title={item.title}>{item.title}</p>
@@ -134,6 +124,22 @@ const ContentManagement = () => {
                       <td className="p-4">
                         <span className="font-bold text-secondary uppercase">{item.subjectCode}</span>
                       </td>
+                      <td className="p-4">
+                        <span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase ${
+                          item.status === 'approved'
+                            ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400'
+                            : item.status === 'rejected'
+                              ? 'bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400'
+                              : 'bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400'
+                        }`}>{item.status}</span>
+                      </td>
+                      <td className="p-4">
+                        <span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase ${
+                          item.status === 'approved' ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400' :
+                          item.status === 'rejected' ? 'bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400' :
+                          'bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400'
+                        }`}>{item.status}</span>
+                      </td>
                       <td className="p-4 text-center font-bold">{item.downloads}</td>
                       <td className="p-4 text-center font-semibold">{item.views}</td>
                       <td className="p-4 text-gray-550 dark:text-gray-400">
@@ -142,7 +148,7 @@ const ContentManagement = () => {
                       <td className="p-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
-                            onClick={() => handleToggleFeature(item._id)}
+                            onClick={() => handleToggleFeature(item.id)}
                             className={`p-2 border rounded-xl transition-colors ${
                               item.isFeatured 
                                 ? 'bg-amber-50 dark:bg-amber-950/20 border-amber-300 dark:border-amber-900/40 text-amber-550' 
@@ -161,7 +167,7 @@ const ContentManagement = () => {
                             <Eye className="w-4 h-4" />
                           </a>
                           <button
-                            onClick={() => handleDelete(item._id)}
+                            onClick={() => handleDelete(item.id)}
                             className="p-2 border border-gray-250 dark:border-gray-750 hover:border-red-500 text-gray-400 hover:text-red-500 rounded-xl transition-colors"
                             title="Delete"
                           >

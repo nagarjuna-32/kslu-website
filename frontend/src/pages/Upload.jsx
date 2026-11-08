@@ -560,7 +560,7 @@ const Upload = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                   {myUploads.map(item => (
-                    <tr key={item._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/10 transition-colors">
+                    <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/10 transition-colors">
                       <td className="p-4 font-bold text-slate-850 dark:text-slate-255 truncate max-w-xs">{item.title}</td>
                       <td className="p-4">
                         <span className="uppercase text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-650 dark:text-slate-350">

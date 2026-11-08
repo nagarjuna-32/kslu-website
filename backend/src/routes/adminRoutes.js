@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {
   getDashboardStats,
+  getAllMaterialsAdmin,
   getPendingMaterials,
   approveMaterial,
   rejectMaterial,
@@ -31,6 +32,7 @@ router.use(authorize('admin', 'superadmin'));
 
 router.get('/dashboard', getDashboardStats);
 router.get('/pending', getPendingMaterials);
+router.get('/materials', getAllMaterialsAdmin);
 router.put('/materials/:id/approve', approveMaterial);
 router.put('/materials/:id/reject', rejectMaterial);
 router.put('/materials/:id/feature', toggleFeatureMaterial);

@@ -78,7 +78,7 @@ const ActivityLogs = () => {
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
                 {logs.map(log => (
-                  <tr key={log._id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/10">
+                  <tr key={log.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/10">
                     <td className="p-4 font-bold text-gray-850 dark:text-gray-250">
                       {log.user ? log.user.name : 'Guest Client'}
                       {log.user && <p className="text-[9px] text-gray-450 font-normal mt-0.5">{log.user.email}</p>}

@@ -91,7 +91,7 @@ const Dashboard = () => {
           ) : (
             <div className="divide-y divide-gray-100 dark:divide-gray-800/60">
               {pending.map(item => (
-                <div key={item._id} className="py-3 flex justify-between items-center text-xs">
+                <div key={item.id} className="py-3 flex justify-between items-center text-xs">
                   <div>
                     <p className="font-bold text-gray-800 dark:text-gray-250 truncate max-w-[200px]" title={item.title}>{item.title}</p>
                     <p className="text-[10px] text-gray-450 dark:text-gray-550 mt-0.5 uppercase">
@@ -123,7 +123,7 @@ const Dashboard = () => {
           ) : (
             <div className="divide-y divide-gray-100 dark:divide-gray-800/60">
               {logs.map(log => (
-                <div key={log._id} className="py-3 flex justify-between items-center text-xs">
+                <div key={log.id} className="py-3 flex justify-between items-center text-xs">
                   <div>
                     <span className="font-bold text-gray-850 dark:text-gray-250">{log.user?.name || 'Guest'}</span>{' '}
                     <span className="text-gray-500 dark:text-gray-450">performed</span>{' '}

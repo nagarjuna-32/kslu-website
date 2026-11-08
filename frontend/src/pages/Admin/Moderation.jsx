@@ -33,7 +33,7 @@ const Moderation = () => {
     try {
       const response = await api.put(`/admin/materials/${id}/approve`);
       if (response.data.success) {
-        setMaterials(prev => prev.filter(m => m._id !== id));
+        setMaterials(prev => prev.filter(m => m.id !== id));
         toast.success('Material approved and published!');
       }
     } catch (err) {
@@ -53,11 +53,11 @@ const Moderation = () => {
     }
     
     try {
-      const response = await api.put(`/admin/materials/${selectedMaterial._id}/reject`, {
+      const response = await api.put(`/admin/materials/${selectedMaterial.id}/reject`, {
         reason: rejectReason
       });
       if (response.data.success) {
-        setMaterials(prev => prev.filter(m => m._id !== selectedMaterial._id));
+        setMaterials(prev => prev.filter(m => m.id !== selectedMaterial.id));
         setModalOpen(false);
         setSelectedMaterial(null);
         toast.success('Upload rejected and uploader notified');
@@ -101,7 +101,7 @@ const Moderation = () => {
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
                 {materials.map(item => (
-                  <tr key={item._id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/10">
+                  <tr key={item.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/10">
                     <td className="p-4">
                       <div>
                         <p className="font-bold text-gray-850 dark:text-gray-250 truncate max-w-[200px]" title={item.title}>{item.title}</p>
@@ -144,7 +144,7 @@ const Moderation = () => {
                           <Eye className="w-4 h-4" />
                         </a>
                         <button
-                          onClick={() => handleApprove(item._id)}
+                          onClick={() => handleApprove(item.id)}
                           className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-colors"
                           title="Approve & Publish"
                         >
