@@ -59,6 +59,56 @@ exports.getDashboardStats = async (req, res, next) => {
   }
 };
 
+// @desc    Get all study materials for admin content management
+// @route   GET /api/admin/materials
+// @access  Protected (Admin Only)
+exports.getAllMaterialsAdmin = async (req, res, next) => {
+  try {
+    const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, Number.parseInt(req.query.limit, 10) || 10));
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+    const status = typeof req.query.status === 'string' ? req.query.status.trim() : '';
+
+    const where = {};
+    if (['pending', 'approved', 'rejected'].includes(status)) where.status = status;
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { subjectName: { contains: search, mode: 'insensitive' } },
+        { subjectCode: { contains: search, mode: 'insensitive' } },
+        { tags: { contains: search, mode: 'insensitive' } }
+      ];
+    }
+
+    const [total, rawMaterials] = await prisma.$transaction([
+      prisma.studyMaterial.count({ where }),
+      prisma.studyMaterial.findMany({
+        where,
+        include: {
+          uploadedBy: { select: { id: true, name: true, avatar: true, reputation: true } }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit
+      })
+    ]);
+
+    const materials = rawMaterials.map(material => ({
+      ...material,
+      tags: material.tags ? material.tags.split(',') : []
+    }));
+
+    res.status(200).json({
+      success: true,
+      count: materials.length,
+      pagination: { total, page, pages: Math.ceil(total / limit) },
+      materials
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Get all pending verification study materials
 // @route   GET /api/admin/pending
 // @access  Protected (Admin Only)
