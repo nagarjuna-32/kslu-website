@@ -47,7 +47,7 @@ const Navbar = () => {
   };
 
   const handleNotifClick = async (notif) => {
-    await markAsRead(notif._id);
+    await markAsRead(notif.id);
     setNotifDropdownOpen(false);
     if (notif.link) {
       navigate(notif.link);
@@ -167,7 +167,7 @@ const Navbar = () => {
                       ) : (
                         notifications.map((notif) => (
                           <div 
-                            key={notif._id}
+                            key={notif.id}
                             className={`p-3 border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30 flex items-start justify-between gap-2 cursor-pointer transition-colors ${!notif.isRead ? 'bg-blue-50/40 dark:bg-blue-900/10' : ''}`}
                             onClick={() => handleNotifClick(notif)}
                           >
@@ -181,7 +181,7 @@ const Navbar = () => {
                             <button 
                               onClick={(e) => {
                                 e.stopPropagation();
-                                deleteNotification(notif._id);
+                                deleteNotification(notif.id);
                               }}
                               className="text-gray-400 hover:text-red-500 p-1 rounded"
                               aria-label="Delete"
