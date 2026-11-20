@@ -7,6 +7,7 @@ import MaterialCard from '../components/materials/MaterialCard';
 import MaterialFilters from '../components/materials/MaterialFilters';
 import MaterialSearch from '../components/materials/MaterialSearch';
 import SkeletonCard from '../components/common/SkeletonCard';
+import ResourceUpdateNotice from '../components/common/ResourceUpdateNotice';
 import { FileText, Inbox, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -142,6 +143,9 @@ const Notes = () => {
           Explore legal lecture notes, summaries, and curriculum digests uploaded by classmates.
         </p>
       </div>
+
+      {/* In-page Update Notice */}
+      <ResourceUpdateNotice resourceType="notes" />
 
       {/* Grid container */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
