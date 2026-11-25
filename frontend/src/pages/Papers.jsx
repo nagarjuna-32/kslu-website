@@ -13,7 +13,6 @@ import MaterialCard from '../components/materials/MaterialCard';
 import MaterialFilters from '../components/materials/MaterialFilters';
 import MaterialSearch from '../components/materials/MaterialSearch';
 import SkeletonCard from '../components/common/SkeletonCard';
-import ResourceUpdateNotice from '../components/common/ResourceUpdateNotice';
 
 import { 
   Landmark, BookOpen, GraduationCap, Calendar, 
@@ -391,9 +390,6 @@ const Papers = () => {
           </button>
         )}
       </div>
-
-      {/* In-page Update Notice */}
-      <ResourceUpdateNotice resourceType="papers" />
 
       {/* Mode Switcher Tabs */}
       <div className="flex items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-2xl w-fit">
